@@ -223,7 +223,7 @@ if("XDomainRequest" in window)
     window.__jb_ieXDRToXHR=undefined;
   };
   
-  if(window.$jb!=null && $jb.Build!=null)
+  if(window.$jb!=null && $jb.Loader!=null)
   {
     $jb.Loader._scope().
     _requireIf("$jb/ieXHR.js",!("XMLHttpRequest" in window)).
