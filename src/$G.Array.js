@@ -432,4 +432,8 @@ if(typeof([].reduceRight)!="function")
   Array.prototype.reduceRight=$temp._touplFn(Array.prototype.reduceRight);
 }
 
+delete $temp._touplFn;
+delete $temp._toupl;
+delete $temp.arrayParamMap;
+
 });
