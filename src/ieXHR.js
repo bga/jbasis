@@ -86,9 +86,9 @@ if(!("XMLHttpRequest" in window) && ("ActiveXObject" in window))
     window.__jb_ieXHR=undefined; // self delete
   };
   
-  if(window.$jb!=null && $jb.Build!=null)
+  if(window.$jb!=null && $jb.Loader!=null)
   {
-    $jb.Build._scope().
+    $jb.Loader._scope().
     _willDeclared("$jb/ieXHR.js").
     _completed(window.__jb_ieXHR);
   }
