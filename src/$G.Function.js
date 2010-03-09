@@ -59,7 +59,7 @@ Function.prototype._apply=function(that,args)
 Function.prototype._header=function(code)
 {
   if(code==null)
-    code=Object(""+this);
+    code=""+this;
   
   return code.substring(0,code.indexOf(")")+1);
 };
@@ -72,7 +72,7 @@ Function.prototype._header=function(code)
 Function.prototype._name=function(code)
 {
   if(code==null)
-    code=Object(""+this);
+    code=""+this;
   
   code=code.substring(code.indexOf("function")+8,code.indexOf("("));
   
@@ -87,7 +87,7 @@ Function.prototype._name=function(code)
 Function.prototype._argNamesString=function(code)
 {
   if(code==null)
-    code=Object(""+this);
+    code=""+this;
   
   return code.substring(code.indexOf("(")+1,code.indexOf(")"));
 };
@@ -112,7 +112,7 @@ Function.prototype._argNames=function(code)
 Function.prototype._body=function(code)
 {
   if(code==null)
-    code=Object(""+this);
+    code=""+this;
   
   return code.substring(code.indexOf("{"));
 };
@@ -279,13 +279,21 @@ else
   @param args array of arguments or null
   @return function 
 */
-$G.Function.prototype._fBind=function(that,args)
+Function.prototype._fBind=function(that,args)
 {
   var _func=this;
-  var _ret=function()
-  {
-    return _func._apply(that || this, args || arguments);
-  };
+  var _ret;
+  
+  var n=(that!=null)+((args!=null)<<1);
+  
+  if(n === 3)
+    _ret=function(){ return _func.apply(that, args); };
+  else if(n === 1)
+    _ret=function(){ return _func.apply(that, arguments); };
+  else if(n === 2)
+    _ret=function(){ return _func.apply(this, args); };
+  else
+    _ret=function(){ return _func.apply(this, arguments); };
   
   _ret.prototype=_func.prototype;
   
