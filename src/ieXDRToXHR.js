@@ -66,6 +66,9 @@ if("XDomainRequest" in window)
       self.__xdrErrorBinded=function(){ self.__xdrError(); };
       self.__xdrProgressBinded=function(){ self.__xdrProgress(); };
       self.__xhrReadyStateChangedBinded=function(){ self.__xhrReadyStateChanged(); };
+      
+      //self.__finalXDRRequestBind=function(){ self.__finalXDRRequest(); };
+      //self.__finalXHRRequestBind=function(){ self.__finalXHRRequest(); };
     };
     
     XMLHttpRequest.prototype.open=function(method,url,asynch,user,pwd)
@@ -108,7 +111,7 @@ if("XDomainRequest" in window)
         this.statusText="OK";
         this.responseText=this.xdr_.responseText;
         
-        this.__finalXDRRequest();
+        //setTimeout(this.__finalXDRRequestBind,0);
         
         this.onreadystatechange();
       }  
@@ -121,6 +124,8 @@ if("XDomainRequest" in window)
         this.status=0;
         this.statusText=""; // ???
         this.responseText="";
+
+        //setTimeout(this.__finalXDRRequestBind,0);
         
         this.onreadystatechange();
       }  
@@ -140,7 +145,7 @@ if("XDomainRequest" in window)
       this.xdr_.onload=
       this.xdr_.onerror=
       this.xdr_.onprogress=
-      this.xdr_.ontimeout=
+      //this.xdr_.ontimeout=
       null;
     };
     XMLHttpRequest.prototype.__sendXDR=function(data)
@@ -190,7 +195,7 @@ if("XDomainRequest" in window)
           this.statusText=this.xhr_.statusText;
           this.responseText=this.xhr_.responseText;
           
-          this.__finalXHRRequest();
+          //setTimeout(this.__finalXHRRequestBind,0);
         }
         
         this.onreadystatechange();
