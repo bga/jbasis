@@ -62,10 +62,10 @@ if("XDomainRequest" in window)
       // static binding
       var self=this;
       
-      self.__xdrLoaded=function(){ self.__xdrLoaded(); };
-      self.__xdrError=this.xdr_.ontimeout=function(){ self.__xdrError(); };
-      self.__xdrProgress=function(){ self.__xdrProgress(); };
-      self.__xhrReadyStateChanged=function(){ self.__xhrReadyStateChanged(); };
+      self.__xdrLoadedBinded=function(){ self.__xdrLoaded(); };
+      self.__xdrErrorBinded=function(){ self.__xdrError(); };
+      self.__xdrProgressBinded=function(){ self.__xdrProgress(); };
+      self.__xhrReadyStateChangedBinded=function(){ self.__xhrReadyStateChanged(); };
     };
     
     XMLHttpRequest.prototype.open=function(method,url,asynch,user,pwd)
@@ -145,9 +145,9 @@ if("XDomainRequest" in window)
     };
     XMLHttpRequest.prototype.__sendXDR=function(data)
     {
-      this.xdr_.onload=this.__xdrLoaded;
-      this.xdr_.onerror=this.xdr_.ontimeout=this.__xdrError;
-      this.xdr_.onprogress=this.__xdrProgress;
+      this.xdr_.onload=this.__xdrLoadedBinded;
+      this.xdr_.onerror=this.xdr_.ontimeout=this.__xdrErrorBinded;
+      this.xdr_.onprogress=this.__xdrProgressBinded;
       this.responseText=null;
       
       this.xdr_.send(data);
@@ -184,7 +184,7 @@ if("XDomainRequest" in window)
       {
         this.readyState=this.xhr_.readyState;
         
-        if(this.readyState==4)
+        if(this.readyState === 4)
         {
           this.status=this.xhr_.status;
           this.statusText=this.xhr_.statusText;
@@ -207,7 +207,7 @@ if("XDomainRequest" in window)
     };
     XMLHttpRequest.prototype.__sendXHR=function(data)
     {
-      this.xhr_.onreadystatechange=this.__xhrReadyStateChanged;
+      this.xhr_.onreadystatechange=this.__xhrReadyStateChangedBinded;
       
       this.xhr_.send(data);
     };
