@@ -49,10 +49,34 @@ $jb._isPrimitiveType=function(obj)
   if(obj==null)
     return true;
   
-  var type==typeof(obj);
+  var type=typeof(obj);
   
-  return type!=="object" && type!=="function";
+  return type !== "object" && type !== "function";
 };
+
+if(typeof(Object.defineProperties) != "function")
+{
+  Object.defineProperties=function(to, from)
+  {
+    //15.2.3.7 If Type(O) is not Object throw a TypeError exception. 
+    if(to==null || typeof(to) !== 'object')
+      throw TypeError();
+      
+    var type=typeof(from);
+    
+    //15.2.3.7 Let props be ToObject(Properties). 
+    if(type === 'object' || type === 'function')
+    {
+      for(var i in from)
+      {
+        if(from.hasOwnProperty(i))
+          to[i]=from[i];
+      }
+    }
+    
+    return this;
+  };
+}
 
 if(typeof(Object.create) != "function")
 {
@@ -60,12 +84,17 @@ if(typeof(Object.create) != "function")
   {
     Object.create=function(pr,initObj)
     {
-      if(initObj==null)
-        initObj={};
+      if(typeof(pr) !== 'object')
+        throw new TypeError();
+
+      var obj=new Object();
         
-      initObj.__proto__=pr;
+      obj.__proto__=pr;
       
-      return initObj;
+      if(initObj!=null)
+        Object.defineProperties(obj,initObj)
+      
+      return obj;
     };
   }
   else
@@ -76,22 +105,25 @@ if(typeof(Object.create) != "function")
       
       Object.create=function(pr,initObj)
       {
-        if(pr==Object.prototype)
-          return initObj || new Object();
+        if(typeof(pr) !== 'object')
+          throw new TypeError();
+        
+        var obj;
+        
+        if(pr !== Object.prototype)
+        {  
+          _constructor.prototype=pr;
           
-        _constructor.prototype=pr;
-        
-        var obj=new _constructor();
-        
-        if(initObj==null)
-          return obj;
-
-        for(var i in initObj)
+          obj=new _constructor();
+        }
+        else
         {
-          if(initObj.hasOwnProperty(i))
-            obj[i]=initObj[i];
+          obj=new Object();
         }
         
+        if(initObj!=null)
+          Object.defineProperties(obj,initObj)
+
         return obj;
       };
     })();  
@@ -109,7 +141,7 @@ if(!("propertyIsEnumerable" in {}))
     
     for(i in this)
     {
-      if(i===name)
+      if(i === name)
         return true;
     }
 
@@ -121,7 +153,7 @@ if(!("hasOwnProperty" in {}))
 {
   Object.prototype.hasOwnProperty=function(name)
   {
-    return (name in this) || this.constructor.prototype[name]!==this[name];
+    return (name in this) || this.constructor.prototype[name] !== this[name];
   };
 }
 
@@ -133,10 +165,10 @@ Object.prototype._filterExtra=function(i,obj)
 {
   return obj.hasOwnProperty(i);
 };
-Number.prototype._filterExtra=$jb.Filter._objectExtra;
-Boolean.prototype._filterExtra=$jb.Filter._objectExtra;
-RegExp.prototype._filterExtra=$jb.Filter._objectExtra;
-Date.prototype._filterExtra=$jb.Filter._objectExtra;
+Number.prototype._filterExtra=Object.prototype._filterExtra;
+Boolean.prototype._filterExtra=Object.prototype._filterExtra;
+RegExp.prototype._filterExtra=Object.prototype._filterExtra;
+Date.prototype._filterExtra=Object.prototype._filterExtra;
 Array.prototype._filterExtra=function(i,obj)
 {
   return obj.hasOwnProperty(i) && !(+i>=0); // not correct by realy fast!
@@ -266,6 +298,24 @@ Object.prototype._findIf=function(_pred,_filter)
 };
 Object.prototype._findIfAsObject=Object.prototype._findIf;
 
+if(Object.__count__!=null)
+{
+  Object.prototype._filterExtra._length=
+  Number.prototype._filterExtra._length=
+  Boolean.prototype._filterExtra._length=
+  Function.prototype._filterExtra._length=
+  RegExp.prototype._filterExtra._length=
+  function()
+  {
+    return this.__count__;
+  };
+  
+  String.prototype._filterExtra._length=function()
+  {
+    return this.__count__-this.length;
+  };
+}
+
 Object.prototype._length=null;
 
 Object.prototype._length=function(_filter)
@@ -273,6 +323,9 @@ Object.prototype._length=function(_filter)
   if(_filter==null)
     _filter=this._filterExtra;
 
+  if(_filter._length!=null)
+    return _filter._length.call(this);
+    
   var i;
   var n=0;
   
