@@ -41,6 +41,19 @@ _require("$jb/$G.Function.js").
 _willDeclared("$jb/$G.Array.js").
 _completed(function(){
 
+if(!Array.isArray)
+{
+  (function()
+  {
+    var _objToString=Object.prototype.toString;
+    
+    Array.isArray=function(a)
+    {
+      return _objToString.call(a) === "[object Array]";
+    };
+  })();
+}
+
 $temp.arrayParamMap={};
 if($d.recalc)
 {
