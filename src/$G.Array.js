@@ -49,7 +49,7 @@ if(!Array.isArray)
     
     Array.isArray=function(a)
     {
-      return _objToString.call(a) === "[object Array]";
+      return (a instanceof Array) || _objToString.call(a) === "[object Array]";
     };
   })();
 }
