@@ -33,11 +33,12 @@
 
   @section DESCRIPTION
  
-  add JavaScript 1.8 support of Array.prototype.indexOf and Array.prototype.lastIndexOf
+  ecma5 Array s complete support with optimization
 */
 
 $jb.Loader._scope().
-_require("$jb/$G.Function.js").
+//_require("$jb/$G.Function.js").
+_require("$jb/$jb.Preprocessor.js").
 _willDeclared("$jb/$G.Array.js").
 _completed(function(){
 
@@ -45,81 +46,34 @@ if(!Array.isArray)
 {
   (function()
   {
-    var _objToString=Object.prototype.toString;
+    var _objToString = Object.prototype.toString;
     
-    Array.isArray=function(a)
+    Array.isArray = function(a)
     {
       return (a instanceof Array) || _objToString.call(a) === "[object Array]";
     };
   })();
 }
 
-$temp.arrayParamMap={};
-if($d.recalc)
-{
-  $temp.arrayParamMap.varDeclare="var v;";
-  $temp.arrayParamMap.valueTest="typeof(v=this[i])!=='undefined'";
-  $temp.arrayParamMap.valueTestNot="typeof(v=this[i])==='undefined'";
-  $temp.arrayParamMap.valuePass="v";
-}
-else
-{
-  $temp.arrayParamMap.varDeclare="";
-  $temp.arrayParamMap.valueTest="(i in this)";
-  $temp.arrayParamMap.valueTestNot="!(i in this)";
-  $temp.arrayParamMap.valuePass="this[i]";
-}
-
-(function()
-{
-  var _replacer=function(whole,v)
-  {
-    return eval(v);
-  };
-  
-  $temp._toupl=function(s,that)
-  {
-    return s.replace(
-      /Toupl._echo\(\s*(.*?)\s*\)/g,
-      _replacer._fBind(that)
-    );
-  };
-})();
-
-$temp._touplFn=function(_fn)
-{
-  var code=""+_fn;
-  var body=_fn._body(code).slice(1,-1);
-  var argNamesString=_fn._argNamesString(code);
-  
-  return new Function(
-    argNamesString,
-    $temp._toupl(
-      ""+body,
-      $temp.arrayParamMap
-    )
-  );
-};
-
 // https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/Array/indexOf
-if(typeof([].indexOf)!="function")
+if(typeof([].indexOf) !== "function")
 {
-  $G.Array.prototype.indexOf=function(value,begin)
+  $G.Array.prototype.indexOf = function(value, begin)
   {
-    var end=this.length;
+    var end = this.length;
     
-    if(begin==null)
+    if(begin == null)
     {  
-      begin=-1;
+      begin = -1;
     }
-    else if(begin<0)
+    else if(begin < 0)
     {
-      begin+=end-1;
+      begin += end - 1;
       
-      if(begin<-1)
-        begin=-1;
+      if(begin < -1)
+        begin = -1;
     }
-    else if(begin>=end)
+    else if(begin >= end)
     {
       return -1;
     }
@@ -128,74 +82,222 @@ if(typeof([].indexOf)!="function")
       --begin;
     }
     
-    while(++begin!==end && this[begin]!==value)
+    while(++begin < end && this[begin] !== value)
       ;
     
-    return begin!==end ? begin : -1;
+    return (begin !== end) ? begin : -1;
   };
 }
 
 // https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/Array/lastIndexOf
-if(typeof([].lastIndexOf)!="function")
+if(typeof([].lastIndexOf) !== "function")
 {
-  $G.Array.prototype.lastIndexOf=function(value,end)
+  $G.Array.prototype.lastIndexOf = function(value, end)
   {
     var len;
     
-    if(end==null)
+    if(end == null)
     {
-      end=this.length;
+      end = this.length;
     }
-    else if(end<0)
+    else if(end < 0)
     {
-      end+=this.length+1;
+      end += this.length+1;
       
-      if(end<1)
+      if(end < 1)
         return -1;
     }
-    else if(end>=(len=this.length))
+    else if(end >= (len = this.length))
     {
-      end=len;
+      end = len;
     }
     else
     {
       ++end;
     }
     
-    while(end-- && this[end]!==value)
+    while(end-- && this[end] !== value)
       ;
     
     return end;
   };
 }
 
+/*
+if($w.opera)
+{
+  $temp.arrayParamMap.forwardLoop = "for(i = 0; i < len; i++)";
+  $temp.arrayParamMap.backwardLoop = "for(i = len; i >= 0 ; i--)";
+}
+else
+{
+  $temp.arrayParamMap.forwardLoop = "i = -1; while(++i < len)";
+  $temp.arrayParamMap.backwardLoop = "i = len; while(i--)";
+}
+*/
+
+eval((new $jb.Preprocessor()).
+_define('VAR_DECLARE',
+  ($d.recalc) ? 'var v;' : ''
+).  
+_define('VALUE_TEST',
+  ($d.recalc) ? "typeof(v=this[i])!=='undefined'" : '(i in this)'
+).  
+_define('VALUE_TEST_NOT',
+  ($d.recalc) ? "typeof(v=this[i])==='undefined'" : "!(i in this)"
+).  
+_define('VALUE_PASS',
+  ($d.recalc) ? "v" : "this[i]"
+).  
+_define('T_LBL:',
+  ''
+).  
+_define('D_LOOP_BODY(B_, E_)',
+  ($w.opera) ? "for(;B_<E_;B_++)" : "while(++B_<E_)"
+).  
+_define('D_LOOP_INIT(B_)',
+  ($w.opera) ? "B_=0;" : "B_=-1;"
+).  
+_define('D_LOOP_NORM(B_)',
+  ($w.opera) ? "++B_;" : ""
+).  
+_define('D_LOOP_FULL(B_, E_)',
+  'D_LOOP_INIT(B_) D_LOOP_BODY(B_,E_)'
+).  
+_define('I_LOOP_BODY(B_)',
+  ($w.opera) ? "for(;B_>=0;B_--)" : "while(B_--)"
+).  
+_define('I_LOOP_INIT(B_, E_)',
+  ($w.opera) ? "B_=E_-1;" : "B_=E_;"
+).  
+_define('I_LOOP_NORM(B_)',
+  ($w.opera) ? "--B_;" : ""
+).  
+_define('I_LOOP_FULL(B_, E_)',
+  'I_LOOP_INIT(B_,E_) I_LOOP_BODY(B_)'
+).
+_pass(
+$jb._preprocessingTextBegin(function(){
+
+if(!([].slice) || ($w.opera && $w.opera.version() < 11.0))
+{
+  // opera has 4x slower code .slice realisation that clear js realisation
+  Array.prototype.slice = function(begin, end)
+  {
+    var len = this.length;
+    
+    if(begin == null)
+    {
+      begin = 0;
+    }
+    else if(begin < 0)
+    {
+      begin += len;
+     
+      if(begin < 0)
+        begin = 0;
+    }
+    else if(begin >= len)
+    {
+      return [];
+    }
+    
+    if(end == null)
+    {
+      end = len;
+    }
+    else if(end < 0)
+    {
+      end += len;
+      
+      if(end < 0)
+        return [];
+    }
+    else if(end > len)
+    {
+      end = len;
+    }
+    
+    if((len = end - begin) <= 0)
+      return [];
+      
+    var a = new Array(len), i;
+    
+    I_LOOP_FULL(i, len)
+      a[i] = this[--end];
+      
+    return a;  
+  };
+}
+
+if($w.opera || ![].concat)
+{
+  Array.prototype.concat=function()
+  {
+    var thisLen = this.length, 
+    a = new Array(thisLen), j, 
+    argsLen=arguments.length, i, 
+    b, bLen, k, l;
+    
+    j = thisLen;
+    while(j--)
+      a[j] = this[j];
+    
+    if(argsLen === 0)
+      return a;
+      
+    var _isArray = Array.isArray;
+    
+    j = thisLen;
+    D_LOOP_FULL(i, argsLen)
+    {
+      if(_isArray(b = arguments[i]))
+      {
+        if((bLen = b.length) > 0)
+        {
+          j = l = a.length += bLen;
+          
+          I_LOOP_FULL(k, bLen)
+            a[--l] = b[k];
+        }    
+      }
+      else
+      {
+        a[j++] = b;
+      }
+    }
+    
+    return a;
+  };
+}
+
 // https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/Array/filter
-if(typeof([].filter)!="function")
+if(typeof([].filter) !== "function")
 {
   if($d.recalc)
   {
-    $G.Array.prototype.filter=function(_fn,that)
+    $G.Array.prototype.filter = function(_fn, that)
     {
-      if(typeof(_fn)!=="function")
+      if(typeof(_fn) !== "function")
         throw new TypeError();
       
-      var i=-1,len=this.length,j=0;
-      var a=new Array(),v;
+      var i = -1, len = this.length, j = 0,
+        a = new Array(), v;
       
-      if(that==null)
+      if(that == null)
       {
-        while(++i!==len)
+        while(++i < len)
         {
-          if(typeof(v=this[i])!=='undefined' && _fn(v,i,this))
-            a[j++]=v;
+          if(typeof(v = this[i]) !== 'undefined' && _fn(v, i, this))
+            a[j++] = v;
         }  
       }
       else
       {
-        while(++i!==len)
+        while(++i < len)
         {
-          if(typeof(v=this[i])!=='undefined' && _fn.call(that,v,i,this))
-            a[j++]=v;
+          if(typeof(v = this[i]) !== 'undefined' && _fn.call(that, v, i, this))
+            a[j++] = v;
         }    
       }
       
@@ -204,28 +306,28 @@ if(typeof([].filter)!="function")
   }
   else
   {
-    $G.Array.prototype.filter=function(_fn,that)
+    $G.Array.prototype.filter = function(_fn, that)
     {
-      if(typeof(_fn)!=="function")
+      if(typeof(_fn) !== "function")
         throw new TypeError();
       
-      var i=-1,len=this.length,j=0;
-      var a=new Array(),v;
+      var i, len = this.length, j = 0,
+        a = new Array(), v;
       
-      if(that==null)
+      if(that == null)
       {
-        while(++i!==len)
-        {
-          if((i in this) && _fn((v=this[i]),i,this))
-            a[j++]=v;
+        D_LOOP_FULL(i, len)
+        T_LBL:{
+          if((i in this) && _fn((v = this[i]), i, this))
+            a[j++] = v;
         }  
       }
       else
       {
-        while(++i!==len)
-        {
-          if((i in this) && _fn.call(that,(v=this[i]),i,this))
-            a[j++]=v;
+        D_LOOP_FULL(i, len)
+        T_LBL:{
+          if((i in this) && _fn.call(that, (v = this[i]), i, this))
+            a[j++] = v;
         }    
       }
       
@@ -235,218 +337,212 @@ if(typeof([].filter)!="function")
 }
 
 // https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/Array/forEach
-if(typeof([].forEach)!="function")
+if(typeof([].forEach) !== "function")
 {
-  $G.Array.prototype.forEach=function(_fn,that)
+  $G.Array.prototype.forEach = function(_fn, that)
   {
-    if(typeof(_fn)!=="function")
+    if(typeof(_fn) !== "function")
       throw new TypeError();
     
-    var i=-1,len=this.length;
+    var i, len = this.length;
     
-    Toupl._echo(this.varDeclare);
+    VAR_DECLARE;
     
-    if(that==null)
+    if(that == null)
     {
-      while(++i!==len)
+      D_LOOP_FULL(i, len)
       {
-        if(Toupl._echo(this.valueTest))
-          _fn(Toupl._echo(this.valuePass),i,this);
+        if(VALUE_TEST)
+          _fn(VALUE_PASS, i, this);
       }    
     }
     else
     {
-      while(++i!==len)
+      D_LOOP_FULL(i, len)
       {
-        if(Toupl._echo(this.valueTest))
-          _fn.call(that,Toupl._echo(this.valuePass),i,this);
+        if(VALUE_TEST)
+          _fn.call(that, VALUE_PASS, i, this);
       }    
     }
   };
-  Array.prototype.forEach=$temp._touplFn(Array.prototype.forEach);
 }
 
 // https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/Array/every
-if(typeof([].every)!="function")
+if(typeof([].every) !== "function")
 {
-  $G.Array.prototype.every=function(_fn,that)
+  $G.Array.prototype.every = function(_fn, that)
   {
-    if(typeof(_fn)!=="function")
+    if(typeof(_fn) !== "function")
       throw new TypeError();
     
-    var i=-1,len=this.length;
+    var i, len = this.length;
     
-    Toupl._echo(this.varDeclare);
+    VAR_DECLARE;
 
-    if(that==null)
+    if(that == null)
     {
-      while(++i!==len)
+      D_LOOP_FULL(i, len)
       {
-        if(Toupl._echo(this.valueTest) && !_fn(Toupl._echo(this.valuePass),i,this))
+        if(VALUE_TEST && !_fn(VALUE_PASS, i, this))
           return false;
       }    
     }
     else
     {
-      while(++i!==len)
+      D_LOOP_FULL(i, len)
       {
-        if(Toupl._echo(this.valueTest) && !_fn.call(that,Toupl._echo(this.valuePass),i,this))
+        if(VALUE_TEST && !_fn.call(that, VALUE_PASS, i, this))
           return false;
       }    
     }
     
     return true;
   };
-  Array.prototype.every=$temp._touplFn(Array.prototype.every);
 }
 
 // https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/Array/map
-if(typeof([].map)!="function")
+if(typeof([].map) !== "function")
 {
-  $G.Array.prototype.map=function(_fn,that)
+  $G.Array.prototype.map = function(_fn, that)
   {
-    if(typeof(_fn)!=="function")
+    if(typeof(_fn) !== "function")
       throw new TypeError();
     
-    var i=-1,len=this.length;
-    var a=new Array(len);
+    var i, len = this.length;
+    var a = new Array(len);
     
-    Toupl._echo(this.varDeclare);
+    VAR_DECLARE;
     
-    if(that==null)
+    if(that == null)
     {
-      while(++i!==len)
+      D_LOOP_FULL(i, len)
       {
-        if(Toupl._echo(this.valueTest))
-          a[i]=_fn(Toupl._echo(this.valuePass),i,this);
+        if(VALUE_TEST)
+          a[i] = _fn(VALUE_PASS, i, this);
       }  
     }
     else
     {
-      while(++i!==len)
+      D_LOOP_FULL(i, len)
       {
-        if(Toupl._echo(this.valueTest))
-          a[i]=_fn.call(that,Toupl._echo(this.valuePass),i,this);
+        if(VALUE_TEST)
+          a[i] = _fn.call(that, VALUE_PASS, i, this);
       }  
     }
     
     return a;
   };
-  Array.prototype.map=$temp._touplFn(Array.prototype.map);
 }
 
-// developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/Array/someif(typeof([].every)!="function")
-if(typeof([].some)!="function")
+// developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/Array/someif(typeof([].every) != "function")
+if(typeof([].some) !== "function")
 {
-  $G.Array.prototype.some=function(_fn,that)
+  $G.Array.prototype.some = function(_fn, that)
   {
-    if(typeof(_fn)!=="function")
+    if(typeof(_fn) !== "function")
       throw new TypeError();
     
-    var i=-1,len=this.length;
+    var i, len = this.length;
     
-    Toupl._echo(this.varDeclare);
+    VAR_DECLARE;
 
-    if(that==null)
+    if(that == null)
     {
-      while(++i!==len)
+      D_LOOP_FULL(i, len)
       {
-        if(Toupl._echo(this.valueTest) && _fn(Toupl._echo(this.valuePass),i,this))
+        if(VALUE_TEST && _fn(VALUE_PASS, i, this))
           return true;
       }    
     }
     else
     {
-      while(++i!==len)
+      D_LOOP_FULL(i, len)
       {
-        if(Toupl._echo(this.valueTest) && _fn.call(that,Toupl._echo(this.valuePass),i,this))
+        if(VALUE_TEST && _fn.call(that, VALUE_PASS, i, this))
           return true;
       }    
     }
     
     return false;
   };
-  Array.prototype.some=$temp._touplFn(Array.prototype.some);
 }
 
 // https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Objects/Array/reduce
-if(typeof([].reduce)!="function")  
+if(typeof([].reduce) !== "function")  
 {  
   Array.prototype.reduce = function(_fn , rv)  
   {  
-    if (typeof(_fn)!=="function")  
+    if (typeof(_fn) !== "function")  
       throw new TypeError();  
   
-    var len=this.length,i=-1;  
+    var len = this.length, i = -1;  
     
-    if(rv==null)  
+    if(rv == null)  
     {  
       // no value to return if no rv value and an empty array  
-      if(len===0)  
+      if(len === 0)  
         throw new TypeError();  
       
-      while(++i!==len && Toupl._echo(this.valueTestNot))
+      while(++i < len && VALUE_TEST_NOT)
         ;
       
       // if array contains no values, no rv value to return  
-      if (i === len)  
+      if (i  === len)  
         throw new TypeError();  
 
       rv = this[i];  
     }  
 
-    Toupl._echo(this.varDeclare);
+    VAR_DECLARE;
     
-    while (++i!==len)  
+    D_LOOP_NORM(i)
+    D_LOOP_BODY(i, len)
     {  
-      if(Toupl._echo(this.valueTest))  
-        rv = _fn(rv, Toupl._echo(this.valuePass), i, this);  
+      if(VALUE_TEST)  
+        rv = _fn(rv, VALUE_PASS, i, this);  
     }  
   
     return rv;  
   };
-  Array.prototype.reduce=$temp._touplFn(Array.prototype.reduce);
 }
 
 // https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Objects/Array/reduceRight
-if(typeof([].reduceRight)!="function")  
+if(typeof([].reduceRight) !== "function")  
 {  
-  Array.prototype.reduceRight = function(_fn,rv)  
+  Array.prototype.reduceRight = function(_fn, rv)  
   {  
-    if (typeof(_fn) !== 'function')
+    if (typeof(_fn)  !== 'function')
       throw new TypeError();
   
     var i = this.length;
 
-    if(rv==null)
+    if(rv == null)
     {
-      if(i === 0)
+      if(i  === 0)
         throw new TypeError();
       
-      while(i-- && Toupl._echo(this.valueTestNot))
+      while(i-- && VALUE_TEST_NOT)
         ;
 
-      if (i === -1)
+      if (i  === -1)
         throw new TypeError();
 
       rv = this[i];
     }
 
-    Toupl._echo(this.varDeclare);
+    VAR_DECLARE;
 
-    while (i--)
+    I_LOOP_NORM(i)
+    I_LOOP_BODY(i)
     {
-      if (Toupl._echo(this.valueTest))
-        rv = _fn(rv, Toupl._echo(this.valuePass), i, this);
+      if(VALUE_TEST)
+        rv = _fn(rv, VALUE_PASS, i, this);
     }
   
     return rv;
   };
-  Array.prototype.reduceRight=$temp._touplFn(Array.prototype.reduceRight);
 }
-
-delete $temp._touplFn;
-delete $temp._toupl;
-delete $temp.arrayParamMap;
+})._preprocessingTextEnd()
+));
 
 });
