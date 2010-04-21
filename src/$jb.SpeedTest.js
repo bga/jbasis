@@ -36,6 +36,7 @@
 */
 
 $jb.Loader._scope().
+_require("$jb/_css/$jb.SpeedTest.css").
 _require("$jb/$G.Function.js").
 _willDeclared("$jb/$jb.SpeedTest.js").
 _completed(function(){
