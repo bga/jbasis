@@ -37,50 +37,50 @@
   
   javascript OOP in example:
   
-  $G.MyClass=function(a,b)
+  $G.MyClass = function(a, b)
   {
-    this.c=a+b;
+    this.c = a + b;
   };
   
-  $G.MyClass.prototype._myMethod=function()
+  $G.MyClass.prototype._myMethod = function()
   {
     return c;
   };
   
-  $G._test00=function()
+  $G._test00 = function()
   {
-    var myClass=new MyClass(1,2);
+    var myClass = new MyClass(1, 2);
     
     myClass._myMethod();
   };
   
-  $G.MyStaticDerivedClass=function()
+  $G.MyStaticDerivedClass = function()
   {
     // call base class constructor
-    MyBaseClass.apply(this,arguments);
+    MyBaseClass.apply(this, arguments);
     
-    this.n="abc";
+    this.n = "abc";
   };
   
   $G.MyStaticDerivedClass._staticDeriveFrom($G.MyClass);
   
-  $G.MyStaticDerivedClass.prototype._myNewMethod=function(m)
+  $G.MyStaticDerivedClass.prototype._myNewMethod = function(m)
   {
-    this.n+=m;
+    this.n += m;
      
     return m;
   };
 
   // derive from base MyClass class
-  $G.MyStaticDerivedClass.prototype._myMethod=function()
+  $G.MyStaticDerivedClass.prototype._myMethod = function()
   {
     // call base class version
     return MyClass.prototype._myMethod.call(this);
   };
   
-  $G._test01=function()
+  $G._test01 = function()
   {
-    var myStaticDerivedClass=new MyStaticDerivedClass(1,2);
+    var myStaticDerivedClass = new MyStaticDerivedClass(1, 2);
     
     myStaticDerivedClass._myNewMethod("aaa");
     
@@ -88,65 +88,112 @@
     myStaticDerivedClass._myMethod("aaa");
 
     // base version
-    MyClass.prototype._myMethod.call(myStaticDerivedClass,"aaa");
+    MyClass.prototype._myMethod.call(myStaticDerivedClass, "aaa");
   };
 
-  $G.MyDynamicDerivedClass=function(_cl00)
+  
+  $G.MyProtoDerivedClass = function()
   {
-    this._dynamicDeriveFrom(_cl00(),"_cl00()","MyDynamicDerivedClass");
+    // call base class constructor
+    MyBaseClass.apply(this, arguments);
+    
+    this.n = "abc";
   };
   
-  $G.MyDynamicDerivedClass.prototype._myMethod=function()
+  $G.MyProtoDerivedClass._protoDeriveFrom($G.MyClass);
+  
+  $G.MyProtoDerivedClass.prototype._myNewMethod = function(m)
   {
-    return 2+this._baseClass("_cl00","MyDynamicDerivedClass")._myMethod.call(this);
+    this.n -= m;
+     
+    return m;
   };
 
-  $G.MyDynamicDerivedClass.prototype._myNewMethod=function(m)
+  // derive from base MyClass class
+  $G.MyProtoDerivedClass.prototype._myMethod = function()
   {
-    return "a"+m;
+    // call base class version
+    MyClass.prototype._myMethod.call(this);
+    
+    // syntax sugar can be used
+    this.constructor.superClass.prototype._myMethod.call(this);
+    // or
+    this.constructor.superProto._myMethod.call(this);
+    
   };
   
-  $G._test02=function()
+  $G._test02 = function()
   {
-    var myDynamicDerivedClassFromMyClass=
-    new MyStaticDerivedClass(function() { return new MyClass(3,4); });
+    var myProtoDerivedClass = new MyProtoDerivedClass(1, 2);
+    
+    myProtoDerivedClass._myNewMethod("aaa");
+    
+    // derived version
+    myProtoDerivedClass._myMethod("aaa");
+
+    // base version
+    MyClass.prototype._myMethod.call(myStaticDerivedClass, "aaa");
+  };
+
+
+  $G.MyDynamicDerivedClass = function(base0)
+  {
+    this._dynamicDeriveFrom(base0, "base0", "MyDynamicDerivedClass");
+  };
+  
+  $G.MyDynamicDerivedClass.prototype._myMethod = function()
+  {
+    return 2 + this._baseClass("base0", "MyDynamicDerivedClass")._myMethod.call(this);
+  };
+
+  $G.MyDynamicDerivedClass.prototype._myNewMethod = function(m)
+  {
+    return "a" + m;
+  };
+  
+  $G._test02 = function()
+  {
+    var myDynamicDerivedClassFromMyClass = new MyStaticDerivedClass(new MyClass(3, 4));
     
     // _myMethod was overwriten
     myDynamicDerivedClassFromMyClass._myMethod();
+    
     // and base version
-    myDynamicDerivedClassFromMyClass._baseClass("_cl00","MyDynamicDerivedClass").
+    myDynamicDerivedClassFromMyClass._baseClass("base0", "MyDynamicDerivedClass").
     _myMethod.call(myDynamicDerivedClassFromMyClass);
     
     // _myNewMethod was not overwriten
     myDynamicDerivedClassFromMyClass._myNewMethod();
     
-    var myDynamicDerivedClassFromMyStaticDerivedClass=
-    new MyDynamicDerivedClass(
-      // same as function() {return new MyStaticDerivedClass(3,4) } but recomended for use to avoid couple of extra closures 
-      MyStaticDerivedClass._fBind(null,[5,6])._fNew() 
+    var myDynamicDerivedClassFromMyStaticDerivedClass = new MyDynamicDerivedClass(
+      new MyStaticDerivedClass(5, 6); 
     );
 
+    
     // _myMethod was overwriten
     myDynamicDerivedClassFromMyStaticDerivedClass._myMethod();
+    
     // and base version
-    myDynamicDerivedClassFromMyStaticDerivedClass._baseClass("_cl00","MyDynamicDerivedClass").
+    myDynamicDerivedClassFromMyStaticDerivedClass._baseClass("base0", "MyDynamicDerivedClass").
     _myMethod.call(myDynamicDerivedClassFromMyStaticDerivedClass);
 
+    
     // _myNewMethod also was overwriten
     myDynamicDerivedClassFromMyStaticDerivedClass._myNewMethod("4");
+    
     // and base version
-    myDynamicDerivedClassFromMyStaticDerivedClass._baseClass("_cl00","MyDynamicDerivedClass").
+    myDynamicDerivedClassFromMyStaticDerivedClass._baseClass("base0", "MyDynamicDerivedClass").
     _myNewMethod.call(myDynamicDerivedClassFromMyStaticDerivedClass);
     
-    var myDynamicDerivedClassFromObject=
+    var myDynamicDerivedClassFromObject =
     new MyDynamicDerivedClass(
-      {d:10,_myMethod:function() { return this.c+this.d+1; }} 
+      {d: 10, _myMethod:function() { return this.c + this.d + 1; }} 
     );
 
     // _myMethod was overwriten
     myDynamicDerivedClassFromObject._myMethod();
     // and base version
-    myDynamicDerivedClassFromObject._baseClass("_cl00","MyDynamicDerivedClass").
+    myDynamicDerivedClassFromObject._baseClass("base0", "MyDynamicDerivedClass").
     _myMethod.call(myDynamicDerivedClassFromObject);
 
     // _myNewMethod was not overwriten
@@ -156,6 +203,7 @@
 */
 
 $jb.Loader._scope().
+_require('$jb/$jb.Object.js').
 _willDeclared("$jb/OOP.js").
 _completed(function(){
 
@@ -164,17 +212,34 @@ _completed(function(){
   @param _constuctor constuctor from which prototype extend 
   @return this
 */
-Function.prototype._staticDeriveFrom=function(_constuctor)
+Function.prototype._staticDeriveFrom = function(_constuctor)
 {
-  var i=null;
-  var dpr=this.prototype;
-  var spr=_constuctor.prototype;
+  var i, dpr = this.prototype, spr = _constuctor.prototype;
   
-  for(i in spr)
+  if(Object.getPrototypeOf(dpr) === Object.getPrototypeOf(spr))
   {
-    if(spr.hasOwnProperty(i))
-      dpr[i]=spr[i];
-  };
+    for(i in spr)
+    {
+      if(!(i in dpr))
+        dpr[i] = spr[i];
+    };
+  }
+  else
+  {
+    for(i in spr)
+    {
+      if(spr.hasOwnProperty(i) && !(i in dpr))
+        dpr[i] = spr[i];
+    };
+  }
+  
+  return this;
+};
+
+Function.prototype._protoDeriveFrom = function(_constuctor)
+{
+  ((this.prototype = Object.create(_constuctor.prototype)).constructor = this).superClass = _constuctor;
+  this.superProto = _constuctor.prototype;
   
   return this;
 };
@@ -186,54 +251,54 @@ Function.prototype._staticDeriveFrom=function(_constuctor)
   @param derivedName full simbolic text name of derived(this) object.
   @return this
 */
-Object.prototype._dynamicDeriveFrom=function(baseObject,baseName,derivedName)
+Object.prototype._dynamicDeriveFrom = function(baseObject, baseName, derivedName)
 {
-  var jb,jbB;
+  var jb, jbB;
   
-  if((jb=this.jb_)==null)
-    jb=this.jb_={};
+  if((jb = this.jb_) == null)
+    jb = this.jb_ = new Object();
 
-  if((jbB=baseObject.jb_)==null)
-    jbB=baseObject.jb_={};
+  if((jbB = baseObject.jb_) == null)
+    jbB=baseObject.jb_ = new Object();
     
-  var thisBOMR=jb.baseObjMapRef;
-  var baseBOMR=baseObject.jb_ && baseObject.jb_.baseObjMapRef;
+  var thisBOMR = jb.baseObjMapRef,
+    baseBOMR = baseObject.jb_ && baseObject.jb_.baseObjMapRef;
   
-  if(thisBOMR==null && baseBOMR!=null)
+  if(thisBOMR == null && baseBOMR != null)
   {
-    thisBOMR=jb.baseObjMapRef=baseBOMR;
+    thisBOMR = jb.baseObjMapRef = baseBOMR;
   }
-  else if(thisBOMR==null && baseBOMR==null)
+  else if(thisBOMR == null && baseBOMR == null)
   {
-    thisBOMR=jb.baseObjMapRef=baseBOMR=jbB.baseObjMapRef={};
-    thisBOMR.baseObjMap={};
+    thisBOMR = jb.baseObjMapRef = baseBOMR = jbB.baseObjMapRef = new Object();
+    thisBOMR.baseObjMap = new Object();
   }
-  else if(thisBOMR!=null && baseBOMR!=null)
+  else if(thisBOMR != null && baseBOMR != null)
   {
-    var baseObjMap=baseBOMR.baseObjMap,thisObjMap=thisBOMR.baseObjMap;
-    var lastNode=thisObjMap.lastNode;
+    var baseObjMap = baseBOMR.baseObjMap, thisObjMap = thisBOMR.baseObjMap,
+      lastNode = thisObjMap.lastNode;
     
     for(var i in baseObjMap)
     {
       if(!(i in thisObjMap) && baseObjMap.hasOwnProperty(i))
-        lastNode=thisObjMap[i]={obj:baseObjMap[i].obj, prevNode:lastNode};
+        lastNode = thisObjMap[i] = {obj: baseObjMap[i].obj, prevNode: lastNode};
     }
     
-    thisObjMap.lastNode=lastNode;
+    thisObjMap.lastNode = lastNode;
     
     delete baseBOMR.baseObjMap;
-    baseBOMR.baseObjMap=thisBOMR.baseObjMap;
+    baseBOMR.baseObjMap = thisBOMR.baseObjMap;
   }
   
-  var bpr=baseObject.constructor.prototype;
+  var bpr = baseObject.constructor.prototype;
   
-  thisBOMR.baseObjMap.lastNode=thisBOMR.baseObjMap[baseName+" "+derivedName]=
-  {prevNode:thisBOMR.baseObjMap.lastNode,obj:bpr};
+  thisBOMR.baseObjMap.lastNode = thisBOMR.baseObjMap[baseName + " " + derivedName] =
+  {prevNode: thisBOMR.baseObjMap.lastNode, obj: bpr};
   
   for(var i in baseObject)
   {
     if(!(i in this) && (baseObject.hasOwnProperty(i) || bpr.hasOwnProperty(i)))
-      this[i]=baseObject[i];
+      this[i] = baseObject[i];
   };
   
   return this;
@@ -248,9 +313,11 @@ Object.prototype._dynamicDeriveFrom=function(baseObject,baseName,derivedName)
   @param derivedName full simbolic text name of derived object
   @return base object prototype or null
 */
-Object.prototype._baseClass=function(baseName,derivedName)
+Object.prototype._baseClass = function(baseName, derivedName)
 {
-  return this.jb_ && this.jb_.baseObjMapRef && this.jb_.baseObjMapRef.baseObjMap[baseName+" "+derivedName].obj;
+  var jb, b;
+  
+  return (jb = this.jb_) && (b = jb.baseObjMapRef) && b.baseObjMap[baseName + " " + derivedName].obj;
 };
 
 /**
@@ -258,19 +325,19 @@ Object.prototype._baseClass=function(baseName,derivedName)
   @param _con constructor to test
   @return true if finded else false
 */
-Object.prototype._hasBaseClass=function(_con)
+Object.prototype._hasBaseClass = function(_con)
 {
-  if(this.constructor==_con)
+  if(this.constructor === _con)
     return true;
   
-  var pr=_con.prototype;
-  var i=this.jb_ && this.jb_.baseObjMapRef && this.jb_.baseObjMapRef.baseObjMap &&
-  this.jb_.baseObjMapRef.baseObjMap.lastNode;
+  var pr = _con.prototype,
+    i = this.jb_ && this.jb_.baseObjMapRef && this.jb_.baseObjMapRef.baseObjMap &&
+      this.jb_.baseObjMapRef.baseObjMap.lastNode;
   
-  while(i!=null && i.obj!=pr)
-    i=i.prevNode;
+  while(i != null && i.obj !== pr)
+    i = i.prevNode;
   
-  return i!=null;
+  return i != null;
 };
 
 });
