@@ -224,7 +224,7 @@ if(Object.prototype._filterExtra.propertyIsEnumerable("prototype"))
 }
 else
 {
-  Function.prototype._filterExtra==function(i, obj)
+  Function.prototype._filterExtra = function(i, obj)
   {
     return obj.hasOwnProperty(i);
   };
