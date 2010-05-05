@@ -52,11 +52,14 @@
 /** @var ref to global scope */ 
 this.$G = this;
 
+/** @var ref to application global namespace */ 
+$G.$A = {};
+
 /** @var ref to current window */ 
 $G.$w = window;
 
 /** @var ref to parent window */ 
-$G.$pw = $w.parent;
+//$G.$pw = $w.parent;
 
 /** @var ref to top window */ 
 $G.$tw = $w.top;
@@ -65,28 +68,28 @@ $G.$tw = $w.top;
 $G.$d = document;
 
 /** @var ref to parent document */ 
-$G.$pd = $pw.document;
+//$G.$pd = $pw.document;
 
 /** @var ref to top document */ 
-$G.$td = $tw.document;
+//$G.$td = $tw.document;
 
 /** @var ref to current document head */ 
 $G.$h = $d.getElementsByTagName("head")[0];
 
 /** @var ref to parent document head */ 
-$G.$ph = $pd.getElementsByTagName("head")[0];
+//$G.$ph = $pd.getElementsByTagName("head")[0];
 
 /** @var ref to top document head */ 
-$G.$th = $td.getElementsByTagName("head")[0];
+//$G.$th = $td.getElementsByTagName("head")[0];
 
 /** @var ref to current document documentElement */ 
 $G.$de = $d.documentElement;
 
 /** @var ref to parent document documentElement */ 
-$G.$pde = $pd.documentElement;
+//$G.$pde = $pd.documentElement;
 
 /** @var ref to top document documentElement */ 
-$G.$tde = $td.documentElement;
+//$G.$tde = $td.documentElement;
 
 /** @var ref to global Object for temp vars. Usefull to avoid extra closures and global vars. Do not forgive delete already unnecessary vars */ 
 $G.$temp = {};
@@ -105,10 +108,10 @@ $jb.Loader.urlLoadStatusMap_ = {};
 $jb.Loader.declaredUrlMap_ = {};
 
 /** @var map id -> $jb.Loader.Scope of all currently not completed scopes */
-$jb.Loader.scopes_ = {nextId:0,els:{}};
+$jb.Loader.scopes_ = {nextId: 0, els: {}};
 
 /** @var array of {metaUrl:string, realUrl: string} for replace metaUrls to realUrls */
-$jb.urlAliases = [{url:"$jb/",alias:$jb.Cfg.rootUrl}];
+$jb.urlAliases = [{url: "$jb/", alias: $jb.Cfg.rootUrl}];
 
 /**
   @fn replace meta pathes to physical equivalents
@@ -119,7 +122,7 @@ $jb._metaUrl = function(url)
 {
   var ua = $jb.urlAliases, i = -1, len = ua.length;
   
-  while(++i !== len)
+  while(++i < len)
     url = url.replace(ua[i].url, ua[i].alias);
   
   return url;
@@ -157,12 +160,12 @@ $jb._fullUrl = function(url)
     if(url.charAt(0) !== "/")
       prefix += B.locPath_;
   
-    url = prefix+url;
+    url = prefix + url;
   }
   
-  url=url.replace(/\/\.(?=\/)/g, "");
+  url = url.replace(/\/\.(?=\/)/g, "");
   
-  var b,c,e;
+  var b, c, e;
   
   for( ;; )
   {
@@ -176,11 +179,11 @@ $jb._fullUrl = function(url)
     do
     {
       e += 4;
-      b = url.lastIndexOf("/", b-1);
+      b = url.lastIndexOf("/", b - 1);
     }  
     while(url.substr(e,4) === "/../");
     
-    url = url.substr(0, b)+url.substring(e-1);
+    url = url.substr(0, b) + url.substring(e - 1);
   }
   
   return url;
@@ -191,10 +194,11 @@ $jb._fullUrl = function(url)
   @param v ref to script dom node
   @param _func callback function(scriptDomNode,resultState) where scriptDomNode is given script node 'v' and resultState takes values true if script loaded successfuly, false if not loaded and null if can not detect 
 */
-$jb.Loader.__set_DOMNodeLoaded=function(v, _func)
+$jb.Loader.__set_DOMNodeLoaded = function(v, _func)
 {
   v.onload = function()
   {
+    //alert('onload');
     v.onreadystatechange = v.onerror = null;
     
     setTimeout
@@ -209,6 +213,7 @@ $jb.Loader.__set_DOMNodeLoaded=function(v, _func)
   };
   v.onerror = function()
   {
+    //alert('onerror');
     v.onreadystatechange = v.onload = null;
     
     setTimeout
@@ -221,8 +226,10 @@ $jb.Loader.__set_DOMNodeLoaded=function(v, _func)
       0
     );
   };
+  
   v.onreadystatechange = function()
   {
+    //alert(this.readyState);
     if(this.readyState !== "loaded" && this.readyState !== "complete")
       return;
 
@@ -238,13 +245,14 @@ $jb.Loader.__set_DOMNodeLoaded=function(v, _func)
       0
     );
   };
+  
+  
 };
 
 (function()
 {
-  var s = $h.getElementsByTagName("script")[0];
-  
-  var checkerBody="";
+  var s = $h.getElementsByTagName("script")[0],
+    checkerBody = "";
   
   if("readyState" in s)
   {
@@ -268,7 +276,7 @@ $jb.Loader.__set_DOMNodeLoaded=function(v, _func)
     @fn try to check given script loaded state and declare script url. Can add listeners to detect state and declare later.  
     @param v ref to script node
   */
-  $jb.Loader.__isDOMNodeLoaded=new Function("v", checkerBody);
+  $jb.Loader.__isDOMNodeLoaded = new Function("v", checkerBody);
   
 })();
 
@@ -292,9 +300,9 @@ $jb.Loader.resouceTypes =
     },  
     _findLoadingUrls: function(_callback)
     {
-      var L = $jb.Loader;
-      var ss = $h.getElementsByTagName("script");
-      var src, i = ss.length,s;
+      var L = $jb.Loader,
+        ss = $h.getElementsByTagName("script"),
+        src, i = ss.length,s;
       
       while(i--)
       {
@@ -345,10 +353,10 @@ $jb.Loader.resouceTypes =
     sheetName_: ($d.recalc) ? "styleSheet" : "sheet", 
     _findLoadingUrls:function(_callback)
     {
-      var L = $jb.Loader;
-      var ls = $h.getElementsByTagName("link");
-      var href, i = ls.length, link;
-      var sheetName = this.sheetName_;
+      var L = $jb.Loader,
+        ls = $h.getElementsByTagName("link"),
+        href, i = ls.length, link,
+        sheetName = this.sheetName_;
       
       while(i--)
       {
@@ -358,60 +366,199 @@ $jb.Loader.resouceTypes =
           _callback($jb._fullUrl(href), link[sheetName] != null);
       }
     },
-    _load: function(mime, url, _result)
+    _load: 
+    ($w.opera || $d.recalc) ?
+    function(mime, url, _result)
     {
-      var L = $jb.Loader;
-      var link = $d.createElement("link");
+      var L = $jb.Loader,
+        link = $d.createElement("link"),
+        self = this;
       
       //s.defer=true;
       
       if(_result != null)
       {
-        this.__set_DOMNodeLoaded
+        L.__set_DOMNodeLoaded
         (
           link,
           function(v, isLoaded)
           {
-            _result(v.jb_.buildOrigUrl, isLoaded);
-            v.jb_ = null;
+            _result(link.getAttribute('buildOrigUrl'), isLoaded && link[self.sheetName_]);
+            link.removeAttribute('buildOrigUrl');
           }  
         );
       }  
 
       link.type = mime;
       
-      link.jb_ = {buildOrigUrl: url};
+      link.setAttribute('buildOrigUrl', url);
       link.rel = "stylesheet";
 
       link.href = url;
       $h.appendChild(link);
       
       return null;
-    },
-    __set_DOMNodeLoaded: ($d.recalc || $w.opera) ? 
-      $jb.Loader.__set_DOMNodeLoaded : 
-      function(v,_fn)
+    } : ($G.WebKitPoint || $w.navigator.mozIsLocallyAvailable) ?
+    (function()
+    {
+      var
+        nextId = 0, dataMap = {},      
+        _insertLink = function(url, mime)
+        {
+          var link = $d.createElement('link');
+          
+          link.type = mime;
+          link.rel = "stylesheet";
+          link.href = url;
+
+          $h.appendChild(link);
+        },
+        _cleanUp, _onObjLoad, _fOnTimeout;
+      
+      if($w.navigator.mozIsLocallyAvailable) // ff
       {
-        var attempCount = 10;
-        var sheetName = this.sheetName_;
-        
-        var id=setInterval(
-          function()
+        var iframe = $h.appendChild($d.createElement('iframe')), iframeDocEl,
+          _insertScript = function(url, data)
           {
-            if(v[sheetName] != null)
+            var script = $d.createElement('script');
+            
+            script.type = 'text/javascript';
+            script.src = url;
+            script.onerror = _onScriptError;
+            script.jb_ = data;
+
+            iframeDocEl.appendChild(script);
+          },
+          _cleanUp = function(jb)
+          {
+            delete dataMap[jb.selfId]; 
+            jb.obj.parentNode.removeChild(jb.obj)
+            
+            if(jb.script)
             {
-              clearInterval(id);
-              _fn(v, true);
-            }
-            else if(--attempCount === 0)
-            {
-              clearInterval(id);
-              _fn(v, false);
+              jb.script.onerror = jb.script.jb_ = null;
+              jb.script.parentNode.removeChild(jb.script);
             }
           },
-          250
-        );  
+          _onObjLoad = function()
+          {
+            //console.log("_onObjLoad");
+            var jb = dataMap[this.getAttribute('jbLoaderDataId')]; 
+            
+            _insertLink(jb.url, jb.mime);
+            
+            jb._fn(jb.url, true);
+            
+            if(jb.script)
+              jb.script.onerror = null;
+            else
+              clearTimeout(jb.timeoutId);
+            
+            setTimeout(function(){ _cleanUp(jb); }, 0);  
+          },
+          _onScriptError = function()
+          {
+            //console.log("_onScriptError");
+            var jb = this.jb_;
+            
+            jb.obj.onload = null;
+            jb._fn(jb.url, false);
+            
+            setTimeout(function(){ _cleanUp(jb); }, 0);  
+          },
+          _fOnTimeout = function(data)
+          {
+            return function()
+            {
+              data.script = _insertScript(data.url, data);
+            };
+          };  
+
+        iframeDocEl = iframe.contentWindow.document;
+      
+        iframeDocEl.open();
+        iframeDocEl.write('<html></html>');
+        iframeDocEl.close();
+        
+        iframeDocEl = iframeDocEl.documentElement;
       }
+      else // webkit
+      {
+        var
+          _cleanUp = function(jb)
+          {
+            delete dataMap[jb.selfId]; 
+            jb.obj.parentNode.removeChild(jb.obj)
+          },
+          _onObjLoad = function()
+          {
+            //console.log("_onObjLoad");
+            var jb = dataMap[this.getAttribute('jbLoaderDataId')]; 
+            
+            _insertLink(jb.url, jb.mime);
+            
+            jb._fn(jb.url, true);
+            
+            if(jb.timeoutId)
+              clearTimeout(jb.timeoutId);
+            
+            if(jb.sheetPollThreadId)
+              clearInterval(jb.sheetPollThreadId);
+            
+            setTimeout(function(){ _cleanUp(jb); }, 0);  
+          },
+          _sheetPollThread = function(jb)
+          {
+            if(--jb.attempCount > 0 && !jb.obj.sheet)
+              return;
+            
+            //console.log("_onScriptError");
+            
+            jb.obj.onload = null;
+            jb._fn(jb.url, false);
+            clearInterval(jb.sheetPollThreadId);
+            
+            _cleanUp(jb);
+          },
+          _fOnTimeout = function(data)
+          {
+            return function()
+            {
+              data.timeoutId = null;
+              data.attempCount = 120;
+              data.sheetPollThreadId = setInterval(function(){ _sheetPollThread(data); }, 250);
+            };
+          };  
+      }
+        
+      return function(mime, url, _result)
+      {
+        var L = $jb.Loader, obj, data;
+        
+        if(_result == null)
+        {
+          _insertLink(url, mime);
+          
+          return null;
+        }
+        
+        obj = $d.createElement("object");
+        
+        dataMap[nextId] = data = {url: url, mime: mime, _fn: _result, obj: obj, selfId:nextId};
+        obj.data = url;
+        obj.setAttribute('jbLoaderDataId', nextId);
+        obj.onload = _onObjLoad;
+        obj.width = obj.height = 1;
+        obj.style.display = 'block';
+        ($d.body || $de).appendChild(obj);
+        
+        data.timeoutId = setTimeout(_fOnTimeout(data), 5000);
+        
+        ++nextId;
+        
+        return null;
+      }
+    })() : null
   },
   {
     canDeclareSelf: false,
@@ -448,8 +595,8 @@ $jb.Loader.resouceTypes =
       
       return function(mime, url, _result)
       {
-        var L = $jb.Loader;
-        var image = new Image();
+        var L = $jb.Loader,
+          image = new Image();
         
         image.src = url;
         image.jb_ = {buildOrigUrl: url};
@@ -493,8 +640,7 @@ $jb.Loader.resouceTypes =
 */
 $jb.Loader._declareUrl = function(url)
 {
-  var obj = $jb.Loader.scopes_.els;
-  var i;
+  var obj = $jb.Loader.scopes_.els, i;
   
   $jb.Loader.declaredUrlMap_[url] = true;
   
@@ -572,7 +718,7 @@ $jb.Loader._rtByMime=function(mime)
   return rts[i];
 };
 
-$jb.Loader._load=function(url, _result, mime)
+$jb.Loader._load = function(url, _result, mime)
 {
   var L = $jb.Loader;
   
@@ -600,7 +746,7 @@ $jb.Loader._load=function(url, _result, mime)
   @param nonCompatable true if script not contains scopes. See DESCRIPTION. Optional 
   @return true if scope already declared else false
 */
-$jb.Loader.__requireUrl=function(url, nonCompatable, mime)
+$jb.Loader.__requireUrl = function(url, nonCompatable, mime)
 {
   var L = $jb.Loader;
   
@@ -624,11 +770,74 @@ $jb.Loader.__requireUrl=function(url, nonCompatable, mime)
   return false;
 };
 
-$jb.Loader.__init=function()
+$jb.Loader._status = function()
+{
+  var i, L = $jb.Loader, dm = L.declaredUrlMap_, um = L.urlLoadStatusMap_, sm = L.scopes_.els,
+    t = '', s = '', v, j, m;
+    
+  for(i in dm)
+  {
+    if(dm.hasOwnProperty(i) && dm[i] === false)
+      s += i + '\n';
+  }
+  
+  if(s !== '')
+    t += '/* non declared urls */\n' + s;
+  else
+    t += '/* all urls are declared */\n';
+  
+  s = '';
+
+  for(i in um)
+  {
+    if(um.hasOwnProperty(i) && um[i] === false)
+      s += i + '\n';
+  }
+  
+  if(s !== '')
+    t += '/* non loaded urls */\n' + s;
+  else
+    t += '/* all urls are loaded */\n';
+
+  s = '';
+
+  for(i in sm)
+  {
+    if(!sm.hasOwnProperty(i))
+      continue;
+    
+    v = sm[i];
+    
+    s += '{'
+    for(j in (m = v.requireMap_))
+    {  
+      if(m.hasOwnProperty(j))
+        s += j + ', ';
+    }
+    s += '} -> {';
+    
+    for(j in (m = v.willDeclareMap_))
+    {
+      if(m.hasOwnProperty(j))
+        s += j + ', ';
+    }
+    
+    s += '}\n';
+  }
+  
+  if(s !== '')
+    t += '/* non completed scopes */\n' + s;
+  else
+    t += '/* all scopes are completed */\n';
+  
+  return t;
+};
+
+$jb.Loader.__init = function()
 {
   var L = $jb.Loader;
   
-  var _callback=function(url, isLoaded)
+  var _callback = function(url, isLoaded)
   {
     //console.log(url+" "+isLoaded);
     L.urlLoadStatusMap_[url] = isLoaded;
@@ -642,16 +851,16 @@ $jb.Loader.__init=function()
 };
 
 /** @class represent scope interface */
-$jb.Loader.Scope=function()
+$jb.Loader.Scope = function()
 {
   /** @var map "require url" -> declared state (true if declared else false) */
-  this.requreMap_ = {};
+  this.requireMap_ = new Object();
   
   /** @var count of url not declared already but requring by this scope */
   this.pendingUrlCount_ = 0;
   
   /** @var map "will declare url"->true */
-  this.willDeclareMap_ = {};
+  this.willDeclareMap_ = new Object();
   
   /** @var callback that will be fired when all required urls declared */
   this.__completed = null;
@@ -671,15 +880,18 @@ $jb.Loader.Scope=function()
   @param nonCompatable true if scope is non compatable. Optional
   @return this
 */ 
-$jb.Loader.Scope.prototype._require=function(url, nonCompatable, mime)
+$jb.Loader.Scope.prototype._require = function(url, nonCompatable, mime)
 {
   url = $jb._fullUrl($jb._metaUrl(url));
   
   if($jb.Loader.__requireUrl(url, nonCompatable) === true)
     return this;
   
-  this.requreMap_[url] = false;
-  ++this.pendingUrlCount_;
+  if(!(url in this.requireMap_))
+  {
+    this.requireMap_[url] = false;
+    ++this.pendingUrlCount_;
+  }
   
   return this;
 };
@@ -690,7 +902,7 @@ $jb.Loader.Scope.prototype._require=function(url, nonCompatable, mime)
   @param nonCompatable true if scope is non compatable. Optional
   @return this
 */ 
-$jb.Loader.Scope.prototype._requireIf=function(url, cond, nonCompatable, mime)
+$jb.Loader.Scope.prototype._requireIf = function(url, cond, nonCompatable, mime)
 {
   if(cond)
     this._require(url, nonCompatable, mime);
@@ -703,7 +915,7 @@ $jb.Loader.Scope.prototype._requireIf=function(url, cond, nonCompatable, mime)
   @param url will declared url
   @return this
 */ 
-$jb.Loader.Scope.prototype._willDeclared=function(url)
+$jb.Loader.Scope.prototype._willDeclared = function(url)
 {
   url = $jb._fullUrl($jb._metaUrl(url));
 
@@ -717,8 +929,8 @@ $jb.Loader.Scope.prototype._willDeclared=function(url)
 */ 
 $jb.Loader.Scope.prototype._declareUrl=function()
 {
-  var _declareUrl = $jb.Loader._declareUrl;
-  var obj = this.willDeclareMap_;
+  var _declareUrl = $jb.Loader._declareUrl,
+    obj = this.willDeclareMap_;
   
   for(var i in obj)
   {
@@ -732,7 +944,7 @@ $jb.Loader.Scope.prototype._declareUrl=function()
   @param _func callback
   @return this
 */ 
-$jb.Loader.Scope.prototype._completed=function(_func)
+$jb.Loader.Scope.prototype._completed = function(_func)
 {
   this.__completed = _func;
   
@@ -754,12 +966,12 @@ $jb.Loader.Scope.prototype._completed=function(_func)
   @param url declared url
   @return 0 if not all requires declared else 1
 */ 
-$jb.Loader.Scope.prototype.__resourceDeclared=function(url)
+$jb.Loader.Scope.prototype.__resourceDeclared = function(url)
 {
-  if(this.requreMap_[url] !== false)
+  if(this.requireMap_[url] !== false)
     return 0;
   
-  this.requreMap_[url] = true;
+  this.requireMap_[url] = true;
   --this.pendingUrlCount_;
   
   if(this.pendingUrlCount_ > 0)
