@@ -29,49 +29,51 @@
   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-if(!("XMLHttpRequest" in window) && ("ActiveXObject" in window))
+if(!('XMLHttpRequest' in window) && ('ActiveXObject' in window))
 {
-  window.__jb_ieXHR=function()
+  window.__jb_ieXHR = function(window, $jb)
   {
-    window.XMLHttpRequest=function()
-    {
-      var thisCopy=this;
+    var ActiveXObject = window.ActiveXObject, setTimeout = window.setTimeout;
     
-      setTimeout(function() { delete thisCopy; },0);
+    var XMLHttpRequest = window.XMLHttpRequest = function()
+    {
+      var self = this;
+    
+      setTimeout(function() { delete self; }, 0);
       
-      return new ActiveXObject(window.XMLHttpRequest.lastVerProgId_);
+      return new ActiveXObject(XMLHttpRequest.lastVerProgId_);
     };
     
-    XMLHttpRequest.lastVerProgId_=null;
+    XMLHttpRequest.lastVerProgId_;
     
-    (XMLHttpRequest.__findLastMsXmLHttpVerProgId=function()
+    (XMLHttpRequest.__findLastMsXmLHttpVerProgId = function()
     {
-      var progIds=
+      var progIds =
       [
-        "Microsoft.XMLHTTP",
-        "Msxml2.XMLHTTP",
-        "Msxml2.XMLHTTP.4.0",
-        "Msxml2.XMLHTTP.3.0",
-        "Msxml2.XMLHTTP.5.0",
-        "Msxml2.XMLHTTP.6.0",
-        "Msxml2.XMLHTTP.7.0"
+        'Microsoft.XMLHTTP',
+        'Msxml2.XMLHTTP',
+        'Msxml2.XMLHTTP.3.0',
+        'Msxml2.XMLHTTP.4.0',
+        'Msxml2.XMLHTTP.5.0',
+        'Msxml2.XMLHTTP.6.0',
+        'Msxml2.XMLHTTP.7.0'
       ];
       
-      var i=progIds.length,xhr=null;
+      var i = progIds.length, xhr;
 
-      while(xhr==null && i--)
+      while(xhr == null && i--)
       {
         try
         {
-          xhr=new ActiveXObject(progIds[i]);
+          xhr = new ActiveXObject(progIds[i]);
         }
         catch(err)
         {
-          xhr=null;
+          xhr = null;
         }
       }
       
-      if(xhr==null)
+      if(xhr == null)
       {
         (($jb && $jb._error) || window.alert)("No Msxml available found! XMLHttpRequest emulation for ie fail.");
       }
@@ -79,21 +81,21 @@ if(!("XMLHttpRequest" in window) && ("ActiveXObject" in window))
       {
         delete xhr;
         
-        XMLHttpRequest.lastVerProgId_=progIds[i];
+        XMLHttpRequest.lastVerProgId_ = progIds[i];
       }
     })();
     
-    window.__jb_ieXHR=undefined; // self delete
+    window.__jb_ieXHR = undefined; // self delete
   };
   
-  if(window.$jb!=null && $jb.Loader!=null)
+  if(window.$jb != null && $jb.Loader != null)
   {
     $jb.Loader._scope().
-    _willDeclared("$jb/ieXHR.js").
+    _willDeclared('$jb/ieXHR.js').
     _completed(window.__jb_ieXHR);
   }
   else
   {
-    window.__jb_ieXHR();
+    window.__jb_ieXHR(window, $jb);
   }  
 }
