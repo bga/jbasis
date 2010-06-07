@@ -1,12 +1,12 @@
 /**
   @file
-  @author  Fyodorov "bga" Alexander <bga.email@gmail.com>
+  @author  Fyodorov 'bga' Alexander <bga.email@gmail.com>
  
   @section LICENSE
  
   Experimental common javascript RIA library http://github.com/bga/jbasis
 
-  Copyright (c) 2009-2010, Fyodorov "Bga" Alexander <bga.email@gmail.com>
+  Copyright (c) 2009-2010, Fyodorov 'Bga' Alexander <bga.email@gmail.com>
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -20,10 +20,10 @@
         products derived from this software without specific prior
         written permission.
 
-  THIS SOFTWARE IS PROVIDED BY FYODOROV "BGA" ALEXANDER "AS IS" AND ANY EXPRESS OR
+  THIS SOFTWARE IS PROVIDED BY FYODOROV 'BGA' ALEXANDER 'AS IS' AND ANY EXPRESS OR
   IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
   OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-  IN NO EVENT SHALL FYODOROV "BGA" ALEXANDER BE LIABLE FOR ANY DIRECT, INDIRECT,
+  IN NO EVENT SHALL FYODOROV 'BGA' ALEXANDER BE LIABLE FOR ANY DIRECT, INDIRECT,
   INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
   NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -35,59 +35,65 @@
 */
 
 $jb.Loader._scope().
-_require("$jb/$G.Function.js").
-_require("$jb/OOP.js").
-_require("$jb/exceptions.js").
-_require("$jb/$jb.Net.Base.js").
-_requireIf("$jb/ieXHR.js", $w.XMLHttpRequest==null). // for ie 5.5-6.0 alse requred "iexhr.js"
-_requireIf("$jb/ieXDRToXHR.js", ("XDomainRequest" in $w)). // XDomainRequest IE support
-_willDeclared("$jb/$jb.Net.XHR.js").
-_completed(function(){
+_require('$jb/$G.Function.js').
+_require('$jb/OOP.js').
+_require('$jb/exceptions.js').
+_require('$jb/$jb.Net.Base.js').
+_requireIf('$jb/ieXHR.js', $w.XMLHttpRequest == null). // for ie 5.5-6.0 alse requred 'iexhr.js'
+_requireIf('$jb/ieXDRToXHR.js', ('XDomainRequest' in $w)). // XDomainRequest IE support
+_willDeclared('$jb/$jb.Net.XHR.js').
+_completed(function($G, $jb){
 
 
 if($w.XMLHttpRequest==null)
   return;
 
-if($jb.Net==null)
-  $jb.Net={};
+if($jb.Net == null)
+  $jb.Net = {};
 
-$jb.Net.XHR=function()
+$jb.Net.XHR = function()
 {
   $jb.Net.Base.call(this);
   
   this.xhr_=new $w.XMLHttpRequest();
 
-  this.url=null;
-  this.method=null;
-  this.sendData=null;
+  this.url = null;
+  this.method = null;
+  this.sendData = null;
 
-  this.requestHeaderMap={};
-  this.user=null;
-  this.pwd=null;
+  this.requestHeaderMap = {};
+  this.user = null;
+  this.pwd = null;
   
-  this._acceptStatus=function(status) { return status === 200; }; // only 200 accept
+  this.isCompleted_ = null;
   
-  this.isCompleted_=null;
-  
-  this.__stateChanged=this.__stateChanged._fBind(this);
-  this.__stateChangedReal=this.__stateChangedReal._fBind(this);
+  this.__stateChanged = this.__stateChanged._fBind(this);
+  this.__stateChangedReal = this.__stateChangedReal._fBind(this);
 };
 
 $jb.Net.XHR._staticDeriveFrom($jb.Net.Base);
 
-$jb.Net.XHR.prototype._xhr=function()
+/** @alias */
+var XHRProto = $jb.Net.XHR.prototype;
+ 
+XHRProto._acceptStatus = function(status)
+{
+  return status === 200; // only 200 accept
+}; 
+
+XHRProto._xhr = function()
 {
   return this.xhr_;
 };
 
-$jb.Net.XHR.prototype._data=function()
+XHRProto._data = function()
 {
   return this.xhr_.responseText;
 };
 
-$jb.Net.XHR.prototype.__stateChanged=function()
+XHRProto.__stateChanged = function()
 {
-  if(this.xhr_.readyState!=4)
+  if(this.xhr_.readyState !== 4)
     return;
 
   //if(this.isCompleted_)
@@ -98,75 +104,76 @@ $jb.Net.XHR.prototype.__stateChanged=function()
 
 (function()
 {  
-  var re=new RegExp(/^[a-z]+:\/\/([a-zA-Z\._-]+)\//);
+  var re = /^[a-z]+:\/\/([a-zA-Z\._-]+)\//;
   
-  $jb.Net.XHR.prototype.__isCrossDomain=function(url)
+  XHRProto.__isCrossDomain = function(url)
   {
     return re.test(url) && RegExp.$1.indexOf($d.domain) === -1;
   };
 })();
 
-$jb.Net.XHR.prototype.__stateChangedReal=function()
+XHRProto.__stateChangedReal = function()
 {
-  var status=this.xhr_.status;
+  var status = this.xhr_.status;
   
-  this.isCompleted_=true;
+  this.isCompleted_ = true;
   
-  if(status === 0 || status === 12029 || ( !this.__isCrossDomain(this.url) && this.xhr_.getAllResponseHeaders()=="" ))
+  if(status === 0 || status === 12029 || ( !this.__isCrossDomain(this.url) && this.xhr_.getAllResponseHeaders() === '' ))
   {
-    this._fireEvent("error",this,[new NetworkErr()]);
+    this._fireEvent('error', this, [this, new NetworkError()]);
   }
   else
   {
-    if(this._acceptStatus!=null && !this._acceptStatus(status))
-      this._fireEvent("error",this,[new InvalidStatusErr()]);
+    if(this._acceptStatus != null && !this._acceptStatus(status))
+      this._fireEvent('error', this, [xhr, new InvalidStatusError()]);
     else
-      this._fireEvent("dataReceived",this);
+      this._fireEvent('dataReceived', this, [this]);
   }
 
-  this.readyState=2;
-  this._fireEvent("closed",this);
-  this.xhr_.onreadystatechange=null;
+  this.readyState = 2;
+  this._fireEvent('closed', this, [this]);
+  delete this.xhr_.onreadystatechange;
 };
 
-$jb.Net.XHR.prototype._setRequestHeader=function(key,value)
+XHRProto._setRequestHeader = function(key, value)
 {
-  this.requestHeaderMap[key]=value;
+  this.requestHeaderMap[key] = value;
   
   return this;
 };
 
-$jb.Net.XHR.prototype.__setRequestHeaders=function()
+XHRProto.__setRequestHeaders = function()
 {
-  var i=null;
-  var hm=this.requestHeaderMap;
+  var i;
+  var hm = this.requestHeaderMap;
   
   for(i in hm)
   {
     if(hm.hasOwnProperty(i))
-      this.xhr_.setRequestHeader(i,hm[i]);
+      this.xhr_.setRequestHeader(i, hm[i]);
   }
 };
 
-$jb.Net.XHR.prototype._getResponseHeader=function(key)
+XHRProto._getResponseHeader = function(key)
 {
   return this.xhr_.getResponseHeader(key);
 };
-$jb.Net.XHR.prototype._getAllResponseHeaders=function()
+XHRProto._getAllResponseHeaders = function()
 {
   return this.xhr_.getAllResponseHeaders();
 };
 
 
-$temp._declareFn=function(method)
+$temp._declareFn = function(method)
 {
-  $jb.Net.XHR.prototype["_"+method.toLowerCase()]=function(url)
-  {
-    this.method=method;
-    this.url=url;
-    
-    return this;
-  };
+  XHRProto["_"+method.toLowerCase()] = new Function('url',
+    "\
+    this.method = '" + method + "';\
+    this.url = url;\
+    \
+    return this;\
+    "
+  );  
 };
 $temp._declareFn("GET");
 $temp._declareFn("POST");
@@ -177,78 +184,78 @@ $temp._declareFn("TRACE");
 
 delete $temp._declareFn;
 
-$jb.Net.XHR.prototype._auth=function(user,pwd)
+XHRProto._auth = function(user, pwd)
 {
-  this.user=user;
-  this.pwd=pwd;
+  this.user = user;
+  this.pwd = pwd;
   
   return this;
 };
 
-$jb.Net.XHR.prototype._status=function()
+XHRProto._status = function()
 {
-  return (this.isCompleted_==true) ? this.xhr_.status : null;
+  return (this.isCompleted_ === true) ? this.xhr_.status : null;
 };
 
-$jb.Net.XHR.prototype._send=function(data)
+XHRProto._send = function(data)
 {
-  this.sendData=data;
+  this.sendData = data;
   
   return this;
 };
 
-$jb.Net.XHR.prototype._reopen=function(isSilentClose)
+XHRProto._reopen = function(isSilentClose)
 {
   this._close(isSilentClose);
   
   try
   {
-    this.isCompleted_=false;
-    this.readyState=0;
-    this.xhr_.open(this.method,this.url,true,this.user,this.pwd);
-    this.xhr_.onreadystatechange=this.__stateChanged;
+    this.isCompleted_ = false;
+    this.readyState = 0;
+    this.xhr_.open(this.method, this.url, true, this.user, this.pwd);
+    this.xhr_.onreadystatechange = this.__stateChanged;
     this.__setRequestHeaders();
     
-    this.readyState=1;
-    this._fireEvent("opened",this);
+    this.readyState = 1;
+    this._fireEvent('opened', this, [this]);
     
     this.xhr_.send(this.sendData);
   }
   catch(err)
   {
-    this.isCompleted_=true;
+    this.isCompleted_ = true;
     
-    this._fireEvent("error",this,[err]);
+    this._fireEvent('error', this, [this, err]);
     
     if(this.readyState === 1)
     {
-      this.readyState=2;
-      this._fireEvent("closed",this);
+      this.readyState = 2;
+      this._fireEvent('closed', this, [this]);
     }
     else
     {
-      this.readyState=2;
+      this.readyState = 2;
     }
   }
   
   return this;
 };
 
-$jb.Net.XHR.prototype._close=function(isSilentClose)
+XHRProto._close = function(isSilentClose)
 {
   if(this.isCompleted_ === false)
   {
-    this.isCompleted_=true;
-    this.xhr_.onreadystatechange=null;
+    this.isCompleted_ = true;
+    delete this.xhr_.onreadystatechange;
     this.xhr_.abort();
   }
   
   if(this.readyState !== 2)
   {
-    this.readyState=2;
+    this.readyState = 2;
 
     if(isSilentClose === false)
-      this._fireEvent("closed",this);
+      this._fireEvent('closed', this, [this]);
   }  
   
   return this;
@@ -274,3 +281,4 @@ $jb.Net.XHR.prototype._close=function(isSilentClose)
 // webkit statusText "" status 0 responseText "" getAllResponseHeaders ""
 // ff same statusText "" status 0 responseText "" getAllResponseHeaders null
 // webkit statusText "" status 0 responseText "" getAllResponseHeaders ""
+
