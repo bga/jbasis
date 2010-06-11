@@ -203,9 +203,11 @@
 */
 
 $jb.Loader._scope().
-_require('$jb/$jb.Object.js').
+_require('$jb/$G.Object.js').
 _willDeclared("$jb/OOP.js").
-_completed(function(){
+_completed(function($G, $jb){
+
+var Object = $G.Object, Function = $G.Function;
 
 /**
   @fn extend this.prototype by _constuctor.prototype
@@ -256,10 +258,10 @@ Object.prototype._dynamicDeriveFrom = function(baseObject, baseName, derivedName
   var jb, jbB;
   
   if((jb = this.jb_) == null)
-    jb = this.jb_ = new Object();
+    jb = this.jb_ = {};
 
   if((jbB = baseObject.jb_) == null)
-    jbB=baseObject.jb_ = new Object();
+    jbB = baseObject.jb_ = {};
     
   var thisBOMR = jb.baseObjMapRef,
     baseBOMR = baseObject.jb_ && baseObject.jb_.baseObjMapRef;
@@ -270,8 +272,8 @@ Object.prototype._dynamicDeriveFrom = function(baseObject, baseName, derivedName
   }
   else if(thisBOMR == null && baseBOMR == null)
   {
-    thisBOMR = jb.baseObjMapRef = baseBOMR = jbB.baseObjMapRef = new Object();
-    thisBOMR.baseObjMap = new Object();
+    thisBOMR = jb.baseObjMapRef = baseBOMR = jbB.baseObjMapRef = {};
+    thisBOMR.baseObjMap = {};
   }
   else if(thisBOMR != null && baseBOMR != null)
   {
@@ -292,7 +294,7 @@ Object.prototype._dynamicDeriveFrom = function(baseObject, baseName, derivedName
   
   var bpr = baseObject.constructor.prototype;
   
-  thisBOMR.baseObjMap.lastNode = thisBOMR.baseObjMap[baseName + " " + derivedName] =
+  thisBOMR.baseObjMap.lastNode = thisBOMR.baseObjMap[baseName + ' ' + derivedName] =
   {prevNode: thisBOMR.baseObjMap.lastNode, obj: bpr};
   
   for(var i in baseObject)
@@ -317,7 +319,7 @@ Object.prototype._baseClass = function(baseName, derivedName)
 {
   var jb, b;
   
-  return (jb = this.jb_) && (b = jb.baseObjMapRef) && b.baseObjMap[baseName + " " + derivedName].obj;
+  return (jb = this.jb_) && (b = jb.baseObjMapRef) && b.baseObjMap[baseName + ' ' + derivedName].obj;
 };
 
 /**
