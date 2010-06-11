@@ -29,171 +29,185 @@
   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-if("XDomainRequest" in window)
+if('XDomainRequest' in window)
 {
-  window.__jb_ieXDRToXHR=function()
+  window.__jb_ieXDRToXHR = function(window)
   {
-    var OldXHR=window.XMLHttpRequest;
+    var OldXHR = window.XMLHttpRequest;
     
-    window.XMLHttpRequest=function()
+    window.XMLHttpRequest = function()
     {
-      this.onreadystatechange=null;
+      this.onreadystatechange = null;
       
-      this.xhr_=new OldXHR();
-      this.xdr_=new window.XDomainRequest();
+      this.xhr_;
+      this.xdr_;
       
-      this.readyState=0;
-      this.status=null;
-      this.statusText=null;
-      this.responseText=null;
+      this.readyState = 0;
+      this.status;
+      this.statusText;
+      this.responseText;
       
-      this.onreadystatechange=null;
+      this.onreadystatechange;
       
-      this.getResponseHeader=null;
-      this.getAllResponseHeaders=null;
+      this.getResponseHeader;
+      this.getAllResponseHeaders;
       
-      this.setRequestHeader=null;
+      this.setRequestHeader;
       
-      this.abort=null;
-      this.send=null;
+      this.abort;
+      this.send;
       
-      this.isXDR_=null;
+      this.isXDR_;
 
       // static binding
-      var self=this;
+      var self = this;
       
-      self.__xdrLoadedBinded=function(){ self.__xdrLoaded(); };
-      self.__xdrErrorBinded=function(){ self.__xdrError(); };
-      self.__xdrProgressBinded=function(){ self.__xdrProgress(); };
-      self.__xhrReadyStateChangedBinded=function(){ self.__xhrReadyStateChanged(); };
+      self.__xdrLoadedBinded = function(){ self.__xdrLoaded(); };
+      self.__xdrErrorBinded = function(){ self.__xdrError(); };
+      self.__xdrProgressBinded = function(){ self.__xdrProgress(); };
+      self.__xhrReadyStateChangedBinded = function(){ self.__xhrReadyStateChanged(); };
       
       //self.__finalXDRRequestBind=function(){ self.__finalXDRRequest(); };
       //self.__finalXHRRequestBind=function(){ self.__finalXHRRequest(); };
     };
     
-    XMLHttpRequest.prototype.open=function(method,url,asynch,user,pwd)
+    var XHRProto = XMLHttpRequest.prototype;
+    var protocolRE = /^([a-z]+):/;
+    
+    XHRProto.open = function(method, url, asynch, user, pwd)
     {
-      if(/^([a-z]+):/.test(url) && url.indexOf(document.domain)==-1)
+      if(protocolRE.test(url) && url.indexOf(document.domain) < 0)
       {
-        this.isXDR_=true;
+        if(this.xdr_ == null)
+          this.xdr_ = new window.XDomainRequest();
+        
+        this.isXDR_ = true;
         this.__setXDRActive();
-        this.xdr_.open(method,url);
+        this.xdr_.open(method, url);
       }
       else
       {
-        this.isXDR_=false;
+        if(this.xhr_ == null)
+          this.xhr_ = new OldXHR();
+
+        this.isXDR_ = false;
         this.__setXHRActive();
-        this.xhr_.open(method,url,asynch,user,pwd);
+        this.xhr_.open(method, url, asynch, user, pwd);
       }
     };
 
-    XMLHttpRequest.prototype.__xdrGetResponseHeader=function(name)
+    XHRProto.__xdrGetResponseHeader = function(name)
     {
-      if(name=="Content-Type" && this.xdr_.contentType>"")
+      if(name === 'Content-Type' && this.xdr_.contentType > '')
         return this.xdr_.contentType;
         
-      return "";
+      return '';
     };
-    XMLHttpRequest.prototype.__xdrGetAllResponseHeaders=function()
+    XHRProto.__xdrGetAllResponseHeaders = function()
     {
-      return (this.xdr_.contentType>"") ? "Content-Type: "+this.xdr_.contentType : "";
+      return (this.xdr_.contentType > '') ? 'Content-Type: ' + this.xdr_.contentType : '';
     };
-    XMLHttpRequest.prototype.__xdrSetRequestHeader=function(name,value)
+    XHRProto.__xdrSetRequestHeader=function(name, value)
     {
-      throw new Error("Request headers not supported");
+      throw new Error('Request headers not supported');
     };
-    XMLHttpRequest.prototype.__xdrLoaded=function()
+    XHRProto.__xdrLoaded = function()
     {
-      if(this.onreadystatechange!=null)
+      if(this.onreadystatechange != null)
       {
-        this.readyState=4;
-        this.status=200;
-        this.statusText="OK";
-        this.responseText=this.xdr_.responseText;
+        this.readyState = 4;
+        this.status = 200;
+        this.statusText = 'OK';
+        this.responseText = this.xdr_.responseText;
         
         //setTimeout(this.__finalXDRRequestBind,0);
         
         this.onreadystatechange();
       }  
     };
-    XMLHttpRequest.prototype.__xdrError=function()
+    XHRProto.__xdrError = function()
     {
-      if(this.onreadystatechange!=null)
+      if(this.onreadystatechange != null)
       {
-        this.readyState=4;
-        this.status=0;
-        this.statusText=""; // ???
-        this.responseText="";
+        this.readyState = 4;
+        this.status = 0;
+        this.statusText = ''; // ???
+        this.responseText = '';
 
         //setTimeout(this.__finalXDRRequestBind,0);
         
         this.onreadystatechange();
       }  
     };
-    XMLHttpRequest.prototype.__xdrProgress=function()
+    XHRProto.__xdrProgress = function()
     {
-      if(this.onreadystatechange!=null && this.status!=3)
+      if(this.onreadystatechange != null && this.status != 3)
       {
-        this.readyState=3;
-        this.status=3;
-        this.statusText="";
+        this.readyState = 3;
+        this.status = 3;
+        this.statusText = '';
         this.onreadystatechange();
       }  
     };
-    XMLHttpRequest.prototype.__finalXDRRequest=function()
+    XHRProto.__finalXDRRequest = function()
     {
-      this.xdr_.onload=
-      this.xdr_.onerror=
-      this.xdr_.onprogress=
+      var xdr = this.xdr_;
+      
+      delete xdr.onload;
+      delete xdr.onerror;
+      delete xdr.onprogress;
       //this.xdr_.ontimeout=
-      null;
     };
-    XMLHttpRequest.prototype.__sendXDR=function(data)
+    XHRProto.__sendXDR = function(data)
     {
-      this.xdr_.onload=this.__xdrLoadedBinded;
-      this.xdr_.onerror=this.xdr_.ontimeout=this.__xdrErrorBinded;
-      this.xdr_.onprogress=this.__xdrProgressBinded;
-      this.responseText=null;
+      var xdr = this.xdr_;
+
+      xdr.onload = this.__xdrLoadedBinded;
+      xdr.onerror = this.xdr_.ontimeout=this.__xdrErrorBinded;
+      xdr.onprogress = this.__xdrProgressBinded;
+      this.responseText = null;
       
       this.xdr_.send(data);
     };
-    XMLHttpRequest.prototype.__abortXDR=function()
+    XHRProto.__abortXDR = function()
     {
       this.__finalXDRRequest();
       this.xdr_.abort();
     };
-    XMLHttpRequest.prototype.__setXDRActive=function()
+    XHRProto.__setXDRActive = function()
     {
-      this.send=this.__sendXDR;
-      this.abort=this.__abortXDR;
-      this.getResponseHeader=this.__xdrGetResponseHeader;
-      this.getAllResponseHeaders=this.__xdrGetAllResponseHeaders;
-      this.setRequestHeader=this.__xdrSetRequestHeader;
+      this.send = this.__sendXDR;
+      this.abort = this.__abortXDR;
+      this.getResponseHeader = this.__xdrGetResponseHeader;
+      this.getAllResponseHeaders = this.__xdrGetAllResponseHeaders;
+      this.setRequestHeader = this.__xdrSetRequestHeader;
     };
     
-    XMLHttpRequest.prototype.__xhrGetResponseHeader=function(name)
+    XHRProto.__xhrGetResponseHeader = function(name)
     {
       return this.xhr_.getResponseHeader(name);
     };
-    XMLHttpRequest.prototype.__xhrGetAllResponseHeaders=function()
+    XHRProto.__xhrGetAllResponseHeaders = function()
     {
       return this.xhr_.getAllResponseHeaders();
     };
-    XMLHttpRequest.prototype.__xhrSetRequestHeader=function(name,value)
+    XHRProto.__xhrSetRequestHeader = function(name, value)
     {
-      return this.xhr_.setRequestHeader(name,value);
+      return this.xhr_.setRequestHeader(name, value);
     };
-    XMLHttpRequest.prototype.__xhrReadyStateChanged=function()
+    XHRProto.__xhrReadyStateChanged = function()
     {
-      if(this.onreadystatechange!=null && this.readyState!=this.xhr_.readyState)
+      if(this.onreadystatechange != null && this.readyState != this.xhr_.readyState)
       {
-        this.readyState=this.xhr_.readyState;
+        var xhr = this.xhr_;
         
-        if(this.readyState === 4)
+        this.readyState = xhr.readyState;
+        
+        if(this.readyState == 4)
         {
-          this.status=this.xhr_.status;
-          this.statusText=this.xhr_.statusText;
-          this.responseText=this.xhr_.responseText;
+          this.status = xhr.status;
+          this.statusText = xhr.statusText;
+          this.responseText = xhr.responseText;
           
           //setTimeout(this.__finalXHRRequestBind,0);
         }
@@ -201,42 +215,42 @@ if("XDomainRequest" in window)
         this.onreadystatechange();
       }  
     };
-    XMLHttpRequest.prototype.__finalXHRRequest=function()
+    XHRProto.__finalXHRRequest = function()
     {
-      this.xhr_.onreadystatechange=null;
+      delete this.xhr_.onreadystatechange;
     };
-    XMLHttpRequest.prototype.__abortXHR=function()
+    XHRProto.__abortXHR = function()
     {
       this.__finalXHRRequest();
       this.xhr_.abort();
     };
-    XMLHttpRequest.prototype.__sendXHR=function(data)
+    XHRProto.__sendXHR = function(data)
     {
-      this.xhr_.onreadystatechange=this.__xhrReadyStateChangedBinded;
+      this.xhr_.onreadystatechange = this.__xhrReadyStateChangedBinded;
       
       this.xhr_.send(data);
     };
-    XMLHttpRequest.prototype.__setXHRActive=function()
+    XHRProto.__setXHRActive = function()
     {
-      this.send=this.__sendXHR;
-      this.abort=this.__abortXHR;
-      this.getResponseHeader=this.__xhrGetResponseHeader;
-      this.getAllResponseHeaders=this.__xhrGetAllResponseHeaders;
-      this.setRequestHeader=this.__xhrSetRequestHeader;
+      this.send = this.__sendXHR;
+      this.abort = this.__abortXHR;
+      this.getResponseHeader = this.__xhrGetResponseHeader;
+      this.getAllResponseHeaders = this.__xhrGetAllResponseHeaders;
+      this.setRequestHeader = this.__xhrSetRequestHeader;
     };
 
-    window.__jb_ieXDRToXHR=undefined;
+    window.__jb_ieXDRToXHR = undefined;
   };
   
-  if(window.$jb!=null && $jb.Loader!=null)
+  if(window.$jb != null && $jb.Loader != null)
   {
     $jb.Loader._scope().
-    _requireIf("$jb/ieXHR.js",!("XMLHttpRequest" in window)).
+    _requireIf("$jb/ieXHR.js", !("XMLHttpRequest" in window)).
     _willDeclared("$jb/ieXDRToXHR.js").
     _completed(window.__jb_ieXDRToXHR);
   }
   else
   {
-    window.__jb_ieXDRToXHR();
+    window.__jb_ieXDRToXHR(window);
   }  
 }
