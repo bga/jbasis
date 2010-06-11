@@ -37,67 +37,70 @@
 $jb.Loader._scope().
 _require("$jb/$G.Array.js"). // for Array.prototype.indexOf
 _willDeclared("$jb/$jb.FunctionQueue.js").
-_completed(function(){
+_completed(function($G, $jb){
 
-$jb.FunctionQueue=function()
+$jb.FunctionQueue = function()
 {
-  this.queue_=[];
+  this.queue_ = [];
   
   return this;
 };  
 
-$jb.FunctionQueue.prototype._attach=function(_func)
+/* @alias */
+var FunctionQueueProto = $jb.FunctionQueue.prototype;
+
+FunctionQueueProto._attach = function(_func)
 {
-  if(_func==null)
+  if(_func == null)
     return false;
   
   this.queue_.unshift(_func);
   
   return true;
 };
-$jb.FunctionQueue.prototype._detach=function(_func)
+FunctionQueueProto._detach = function(_func)
 {
-  if(_func==null)
+  if(_func == null)
     return false;
   
-  var i=this.queue_.indexOf(_func);
+  var i = this.queue_.indexOf(_func);
   
-  if(i===-1)
+  if(i === -1)
     return false;
   
-  this.queue_.splice(i,1);
+  this.queue_.splice(i, 1);
   
   return true;
 };
-$jb.FunctionQueue.prototype._has=function(_func)
+FunctionQueueProto._has = function(_func)
 {
-  return this.queue_.indexOf(_func)!=-1;
+  return this.queue_.indexOf(_func) !== -1;
 };
-$jb.FunctionQueue.prototype._apply=function(that,args)
+FunctionQueueProto._apply = function(that, args)
 {
-  var q=this.queue_,i=q.length;
+  var q = this.queue_, i = q.length;
   
-  if(args!=null)
+  if(args != null)
   {
-    while(i-- && q[i].apply(that,args)!==false)
+    while(i-- && q[i].apply(that, args) !== false)
       ;
   }
   else
   {
-    while(i-- && q[i].call(that)!==false)
+    while(i-- && q[i].call(that) !== false)
       ;
   }
   
-  return i===-1;
+  return i === -1;
 };
-$jb.FunctionQueue.prototype._applyAll=function(that,args)
+FunctionQueueProto._applyAll = function(that, args)
 {
-  var q=this.queue_,i=q.length;
+  var q = this.queue_, i = q.length;
   
-  if(args!=null)
+  if(args != null)
   {
     while(i--)
-      q[i].apply(that,args);
+      q[i].apply(that, args);
   }
   else
   {
@@ -107,13 +110,13 @@ $jb.FunctionQueue.prototype._applyAll=function(that,args)
   
   return true;
 };
-  
-$jb._fFunctionQueueApplyC=function(that,fq)
+/*  
+FunctionQueueProto._fApplyC = function(that)
 {
-  var _ret=arguments.callee._fRet();
+  var _ret = arguments.callee._fRet();
   
-  _ret.that=that;
-  _ret.fq=fq;
+  _ret.that = that;
+  _ret.fq = this;
   
   return _ret;
 };
@@ -121,17 +124,19 @@ $jb._fFunctionQueueApplyC._fRet=function()
 {
   return function()
   {
-    var self=arguments.callee;
+    var self = arguments.callee;
     
-    return self.fq._apply(self.that,arguments);
+    return self.fq._apply(self.that, arguments);
   };
 };
-
-$jb._fFunctionQueueApply=function(that,fq)
+*/
+FunctionQueueProto._fApply = function(that)
 {
+  var fq = this;
+  
   return function()
   {
-    return fq._apply(that,arguments);
+    return fq._apply(that, arguments);
   };
 };
 
