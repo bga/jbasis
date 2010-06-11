@@ -37,75 +37,78 @@
 $jb.Loader._scope().
 _require("$jb/$jb.FunctionQueue.js").
 _willDeclared("$jb/$jb.EventTarget.js").
-_completed(function(){
+_completed(function($G, $jb){
 
-$jb.EventTarget=function()
+var FunctionQueue = $jb.FunctionQueue;
+
+$jb.EventTarget = function()
 {
-  this.beforeEventFQMap_={};
-  this.onEventFQMap_={};
-  this.afterEventFQMap_={};
+  this.beforeEventFQMap_ = {};
+  this.onEventFQMap_ = {};
+  this.afterEventFQMap_ = {};
   
-  this.eventLockCountMap_={};
+  this.eventLockCountMap_ = {};
 };
 
-$jb.EventTarget.prototype._attachEvent=function(name,_func,stage)
+/** @alias */ 
+var EventTargetProto = $jb.EventTarget.prototype;
+
+EventTargetProto._attachEvent = function(name, _func, stage)
 {
-  if(stage==null)
-    stage="onEventFQMap_";
-  else
-    stage+="EventFQMap_";
+  var map = (stage == null) ? this.onEventFQMap_ : this[stage + 'EventFQMap_'];
     
-  (this[stage][name] || (this[stage][name]=new $jb.FunctionQueue()))._attach(_func);
+  (map[name] || (map[name] = new FunctionQueue()))._attach(_func);
   
   return this;
 };
-$jb.EventTarget.prototype._detachEvent=function(name,_func,stage)
+EventTargetProto._detachEvent = function(name, _func, stage)
 {
-  if(stage==null)
-    stage="onEventFQMap_";
-  else
-    stage+="EventFQMap_";
+  var map = (stage == null) ? this.onEventFQMap_ : this[stage + 'EventFQMap_'];
 
-  if(name in this[stage])
-    return this[stage][name]._detach(_func);
+  if(name in map)
+    return map[name]._detach(_func);
     
   return false;
 };
-$jb.EventTarget.prototype._lockEvent=function(name)
+EventTargetProto._lockEvent = function(name)
 {
-  if(name in this.eventLockCountMap_)
-    return ++this.eventLockCountMap_[name];
+  var elcm = this.eventLockCountMap_;
+
+  if(name in elcm)
+    return ++elcm[name];
   
-  return this.eventLockCountMap_[name]=1;  
+  return elcm[name] = 1;  
 };
-$jb.EventTarget.prototype._unlockEvent=function(name)
+EventTargetProto._unlockEvent = function(name)
 {
-  if(name in this.eventLockCountMap_)
+  var elcm = this.eventLockCountMap_;
+  
+  if(name in elcm)
   {
-    if(this.eventLockCountMap_[name]>0)
-      return --this.eventLockCountMap_[name];
+    if(elcm[name] > 0)
+      return --elcm[name];
     
     return 0;
   }
   
-  return this.eventLockCountMap_[name]=0;  
+  return elcm[name] = 0;  
 };
 
-$jb.EventTarget.prototype._fireEvent=function(name,scope,args)
+EventTargetProto._fireEvent = function(name, scope, args)
 {
-  if(this.eventLockCountMap_[name]>0)
-    return NaN;
+  if(this.eventLockCountMap_[name] > 0)
+    return null;
     
-  if(scope==null)
-    scope=this;
+  if(scope == null)
+    scope = this;
   
-  var ret=NaN;
+  var ret = null;
   
   if(name in this.beforeEventFQMap_)
     this.beforeEventFQMap_[name]._applyAll(scope, args);
   
   if(name in this.onEventFQMap_)
-    ret=this.onEventFQMap_[name]._apply(scope, args);
+    ret = this.onEventFQMap_[name]._apply(scope, args);
   
   if(name in this.afterEventFQMap_)
     this.afterEventFQMap_[name]._applyAll(scope, args);
