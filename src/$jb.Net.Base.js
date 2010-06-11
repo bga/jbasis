@@ -35,37 +35,37 @@
 */
 
 $jb.Loader._scope().
+_require("$jb/OOP.js").
 _require("$jb/$jb.EventTarget.js").
 _require("$jb/$G.Function.js").
 _willDeclared("$jb/$jb.Net.Base.js").
-_completed(function(){
+_completed(function($G, $jb){
 
+if($jb.Net == null)
+  $jb.Net = {};
 
-if($jb.Net==null)
-  $jb.Net={};
-
-$jb.Net.Base=function()
+$jb.Net.Base = function()
 {
   $jb.EventTarget.call(this);
   
-  this.readyState=2;
+  this.readyState = 2;
 };
 
 $jb.Net.Base._staticDeriveFrom($jb.EventTarget);
 
-$jb.Net.Base.prototype._data=$jb._null;
-$jb.Net.Base.prototype._send=$jb._this;
+$jb.Net.Base.prototype._data = $jb._null;
+$jb.Net.Base.prototype._send = $jb._this;
 
-$jb.Net.Base.prototype._isFlushed=$jb._true;
-$jb.Net.Base.prototype._waitFlush=function()
+$jb.Net.Base.prototype._isFlushed = $jb._true;
+$jb.Net.Base.prototype._waitFlush = function()
 {
-  this._fireEvent("flushed",this);
+  this._fireEvent('flushed', this);
   
   return this;
 };
-$jb.Net.Base.prototype._stopWaitFlush=$jb._this;
+$jb.Net.Base.prototype._stopWaitFlush = $jb._this;
 
-$jb.Net.Base.prototype._reopen=$jb._this;
-$jb.Net.Base.prototype._close=$jb._this;
+$jb.Net.Base.prototype._reopen = $jb._this;
+$jb.Net.Base.prototype._close = $jb._this;
 
 });
