@@ -37,9 +37,11 @@
 $jb.Loader._scope().
 //_require("$jb/$jb.EventTarget.js").
 _willDeclared("$jb/exceptions.js").
-_completed(function(){
+_completed(function($G, $jb){
 
-if($w.DOMException==null)
+var $w = $G.$w;
+
+if($w.DOMException == null)
 {
   $w.DOMException=
   {
@@ -70,53 +72,62 @@ if($w.DOMException==null)
   };
 }
 
-DOMException.SECURITY_ERR=18;
-DOMException.NETWORK_ERR=19;
-DOMException.ABORT_ERR=20;
-DOMException.URL_MISMATCH_ERR=21;
-DOMException.QUOTA_EXCEEDED_ERR=22;
-DOMException.PARSE_ERR=81;
-DOMException.SERIALIZE_ERR=82;
+var DOMException = $w.DOMException;
 
-$w.DOMError=function(msg,code)
+DOMException.SECURITY_ERR = 18;
+DOMException.NETWORK_ERR = 19;
+DOMException.ABORT_ERR = 20;
+DOMException.URL_MISMATCH_ERR = 21;
+DOMException.QUOTA_EXCEEDED_ERR = 22;
+DOMException.PARSE_ERR = 81;
+DOMException.SERIALIZE_ERR = 82;
+
+$w.DOMError = function(msg, code)
 {
   Error.call(this);
   
   this.code = code;
   this.name = "DOMException";
-  this.constructor=DOMException;
-  this.message=msg;
+  this.constructor = DOMException;
+  this.message = msg;
 };
 
 (function()
 {
-  var _wordReplacer=function(str,firstLetter,elWordPart)
+  var _wordReplacer = function(str, firstLetter, elWordPart)
   {
-    return firstLetter+elWordPart.toLowerCase();
+    return firstLetter + elWordPart.toLowerCase();
   };
-  var _domWordReplacer=function(str,firstLetter,elWordPart)
+  var _domWordReplacer = function(str)
   {
     return str.toUpperCase();
   };
-  var _convName=function(name)
+  var wordRE  = /_([A-Z])([A-Z]*)/g, domRE = /Dom(.)/g, errorRE = /Err$/; 
+  var _convName = function(name)
   {
-    return ("_"+name).
-    replace(/_([A-Z])([A-Z]*)/g,_wordReplacer).
-    replace(/Dom(.)/g,_domWordReplacer);
+    return ('_' + name).
+      replace(wordRE, _wordReplacer).
+      replace(domRE, _domWordReplacer).
+      replace(errorRE, 'Error');
   };
+  var de = DOMException;
   
-  for(var name in $w.DOMException)
+  for(var name in de)
   {
-    $w[_convName(name)]=new Function("msg","DOMError.call(this,msg,DOMException."+name+");");
+    if(de.hasOwnProperty(name))
+      $G[_convName(name)] = new Function('msg', 'DOMError.call(this, msg, DOMException.' + name + ');');
   }
 })();
 
-window.BufferOverflowErr=function(msg)
+// use QUOTA_EXCEEDED_ERR instread
+/*
+window.BufferOverflowError=function(msg)
 {
   Error.call(this);
   
   this.name = "BufferOverflowError";
   this.message=msg;
 };
+*/
 
 });
