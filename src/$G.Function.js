@@ -38,7 +38,12 @@
 
 $jb.Loader._scope().
 _willDeclared("$jb/$G.Function.js").
-_completed(function(){
+_completed(function($G, $jb){
+
+var Function = $G.Function, 
+  /** @alias */
+  FunctionProto = Function.prototype,
+  eval = $G.eval, setTimeout = $G.setTimeout, setInterval = $G.setInterval;
 
 /**
   @fn exec function with 'this'='that' and 'arguments'='args'
@@ -46,7 +51,7 @@ _completed(function(){
   @param args array of arguments || 'arguments' || null
   @return result of execution
 */
-Function.prototype._apply=function(that,args)
+FunctionProto._apply=function(that,args)
 {
   return (args == null || args.length === 0) ? this.call(that) : this.apply(that, args);
 };
@@ -56,7 +61,7 @@ Function.prototype._apply=function(that,args)
   @param code function code. Optional
   @return header string
 */
-Function.prototype._header = function(code)
+FunctionProto._header = function(code)
 {
   if(code == null)
     code = "" + this;
@@ -69,7 +74,7 @@ Function.prototype._header = function(code)
   @param code function code. Optional
   @return name string
 */
-Function.prototype._name = function(code)
+FunctionProto._name = function(code)
 {
   if(code == null)
     code = "" + this;
@@ -84,7 +89,7 @@ Function.prototype._name = function(code)
   @param code function code. Optional
   @return array of argument names
 */
-Function.prototype._argNamesString = function(code)
+FunctionProto._argNamesString = function(code)
 {
   if(code == null)
     code = "" + this;
@@ -97,7 +102,7 @@ Function.prototype._argNamesString = function(code)
   @param code function code. Optional
   @return array of argument names
 */
-Function.prototype._argNames = function(code)
+FunctionProto._argNames = function(code)
 {
   code = this._argNamesString(code);
   
@@ -109,7 +114,7 @@ Function.prototype._argNames = function(code)
   @param code function code. Optional
   @return body string
 */
-Function.prototype._body = function(code)
+FunctionProto._body = function(code)
 {
   if(code == null)
     code=""+this;
@@ -117,7 +122,7 @@ Function.prototype._body = function(code)
   return code.substring(code.indexOf("{"));
 };
 
-Function.prototype._isNative = function()
+FunctionProto._isNative = function()
 {
   return ('' + this).indexOf('[native code]') > -1;
 };
@@ -240,7 +245,7 @@ $jb._fConst = function(c)
   @param args array of arguments or null
   @return function. 'function.that' is 'that', 'function.args' is 'args' 
 */
-Function.prototype._fBindC = function(that, args)
+FunctionProto._fBindC = function(that, args)
 {
   var __fRet = arguments.callee.__fRet,
     _ret = __fRet();
@@ -257,7 +262,7 @@ Function.prototype._fBindC = function(that, args)
 
 if(Function.canFastSelf)
 {
-  Function.prototype._fBindC.__fRet = function()
+  FunctionProto._fBindC.__fRet = function()
   {
     return function _self()
     {
@@ -267,7 +272,7 @@ if(Function.canFastSelf)
 }
 else
 {
-  Function.prototype._fBindC.__fRet = function()
+  FunctionProto._fBindC.__fRet = function()
   {
     return function()
     {
@@ -284,28 +289,26 @@ else
   @param args array of arguments or null
   @return function 
 */
-if(Function.prototype.bind && Function.prototype.bind._isNative())
+if(FunctionProto.bind && FunctionProto.bind._isNative())
 {
   (function(){
-    var _bind  = Function.prototype.bind;
+    var _bind  = FunctionProto.bind;
     
-    Function.prototype._fBind = function(that, args)
+    FunctionProto._fBind = function(that, args)
     {
       var _fn = this, _ret;
       
-      switch((that != null) + ((args != null) << 1))
+      if(that != null)
       {
-        case 3:
-          _ret = function(){ return _fn.apply(that, args); };
-          break;
-        case 1:
-          _ret = _bind.call(_fn, that);
-          break;
-        case 2:
-          _ret = function(){ return _fn.apply(this, args); };
-          break;
-        default:
-          _ret = function(){ return (arguments.length > 0) ? _fn.apply(this, arguments) : _fn.call(this); };
+        _ret = (args != null) 
+          ? function(){ return _fn.apply(that, args); }
+          : _bind.call(_fn, that);
+      }
+      else
+      {
+        _ret = (args != null) 
+          ? function(){ return _fn.apply(this, args); }
+          : function(){ return (arguments.length > 0) ? _fn.apply(this, arguments) : _fn.call(this); };
       }
       
       _ret.prototype = _fn.prototype;
@@ -316,25 +319,23 @@ if(Function.prototype.bind && Function.prototype.bind._isNative())
 }
 else
 {
-  Function.prototype._fBind = function(that, args)
+  FunctionProto._fBind = function(that, args)
   {
     var _fn = this, _ret;
     
-    switch((that != null) + ((args != null) << 1))
+    if(that != null)
     {
-      case 3:
-        _ret = function(){ return _fn.apply(that, args); };
-        break;
-      case 1:
-        _ret = function(){ return (arguments.length > 0) ? _fn.apply(that, arguments) : _fn.call(that); };
-        break;
-      case 2:
-        _ret = function(){ return _fn.apply(this, args); };
-        break;
-      default:
-        _ret = function(){ return (arguments.length > 0) ? _fn.apply(this, arguments) : _fn.call(this); };
+      _ret = (args != null) 
+        ? function(){ return _fn.apply(that, args); }
+        : function(){ return (arguments.length > 0) ? _fn.apply(that, arguments) : _fn.call(that); };
     }
-    
+    else
+    {
+      _ret = (args != null) 
+        ? function(){ return _fn.apply(this, args); }
+        : function(){ return (arguments.length > 0) ? _fn.apply(this, arguments) : _fn.call(this); };
+    }
+
     _ret.prototype = _fn.prototype;
     
     return _ret;
@@ -345,7 +346,7 @@ else
   @fn create copyable function that create new class instance by target constructor
   @return function. 'function._fn' is target function 
 */
-Function.prototype._fNewC = function()
+FunctionProto._fNewC = function()
 {
   var __fRet = arguments.callee.__fRet,
     _ret = __fRet();
@@ -358,7 +359,7 @@ Function.prototype._fNewC = function()
 };
 if(Function.canFastSelf)
 {
-  Function.prototype._fNewC.__fRet = function()
+  FunctionProto._fNewC.__fRet = function()
   {
     return function _self()
     {
@@ -368,7 +369,7 @@ if(Function.canFastSelf)
 }
 else
 {
-  Function.prototype._fNewC.__fRet = function()
+  FunctionProto._fNewC.__fRet = function()
   {
     return function()
     {
@@ -381,7 +382,7 @@ else
   @fn create function that create new class instance by target constructor
   @return function 
 */
-Function.prototype._fNew = function()
+FunctionProto._fNew = function()
 {
   var _fn = this;
   
@@ -395,7 +396,7 @@ Function.prototype._fNew = function()
   @fn create copyable function that wrap target function by '_wrapper' eg '_wrapper'(target function())
   @return function. 'function._fn' is target function, 'function._wrapper' is '_wrapper' 
 */
-Function.prototype._fWrapC = function(_wrapper)
+FunctionProto._fWrapC = function(_wrapper)
 {
   var __fRet = arguments.callee.__fRet,
     _ret = __fRet();
@@ -410,7 +411,7 @@ Function.prototype._fWrapC = function(_wrapper)
 };
 if(Function.canFastSelf)
 {
-  Function.prototype._fWrapC.__fRet = function()
+  FunctionProto._fWrapC.__fRet = function()
   {
     return function _self()
     {
@@ -420,7 +421,7 @@ if(Function.canFastSelf)
 }
 else
 {
-  Function.prototype._fWrapC.__fRet = function()
+  FunctionProto._fWrapC.__fRet = function()
   {
     return function()
     {
@@ -435,7 +436,7 @@ else
   @fn create function that wrap target function by '_wrapper' eg '_wrapper'(target function())
   @return function. 'function._fn' is target function, 'function._wrapper' is '_wrapper' 
 */
-Function.prototype._fWrap = function(_wrapper)
+FunctionProto._fWrap = function(_wrapper)
 {
   var _fn = this,
     _ret = function()
@@ -477,9 +478,9 @@ $jb._new = function(classes)
   @param time time to delay. Optional. Default 0
   @return numeric id for pass to $w.clearTimeout to prevent execution
 */
-Function.prototype._defer = 
-Function.prototype._delay = 
-Function.prototype._after = 
+FunctionProto._defer = 
+FunctionProto._delay = 
+FunctionProto._after = 
 function(time)
 {
   return setTimeout(this, time || 0);
@@ -490,7 +491,7 @@ function(time)
   @param time time to delay between execution.
   @return numeric id for pass to $w.clearInterval to prevent period execution
 */
-Function.prototype._period = function(time)
+FunctionProto._period = function(time)
 {
   return setInterval(this, time);
 };
