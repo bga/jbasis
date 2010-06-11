@@ -35,11 +35,13 @@
 $jb.Loader._scope().
 //_require("$jb/nav.js").
 _willDeclared("$jb/$jb.Math.Mat23.js").
-_completed(function(){
+_completed(function($G, $jb){
 
 if($jb.Math == null)
   $jb.Math = {};
 
+var _sin = Math.sin, _cos = Math.cos, _tan = Math.tan;
+  
 $jb.Math.Mat23 = function(m11, m12, m21, m22, m13, m23)
 {
   this.m11 = (m11 == null) ? 1 : m11;
@@ -51,8 +53,11 @@ $jb.Math.Mat23 = function(m11, m12, m21, m22, m13, m23)
 
   return this;
 };
-  
-$jb.Math.Mat23.prototype._identity = function(c)
+
+/* @alias */
+var Mat23Proto = $jb.Math.Mat23.prototype;
+
+Mat23Proto._identity = function(c)
 {
   if(c == null)
     c = 1.0;
@@ -63,22 +68,22 @@ $jb.Math.Mat23.prototype._identity = function(c)
   return this;
 };
 
-$jb.Math.Mat23.prototype._mulPoint = function(p)
+Mat23Proto._mulPoint = function(p)
 {
   return {
     x: (p.x*this.m11 + p.y*this.m12 + this.m13),
     y: (p.x*this.m21 + p.y*this.m22 + this.m23)
   };
 };
-$jb.Math.Mat23.prototype._mulPointX = function(p)
+Mat23Proto._mulPointX = function(p)
 {
   return p.x*this.m11 + p.y*this.m12 + this.m13;
 };
-$jb.Math.Mat23.prototype._mulPointY = function(p)
+Mat23Proto._mulPointY = function(p)
 {
   return p.x*this.m21 + p.y*this.m22 + this.m23;
 };
-$jb.Math.Mat23.prototype._mulMat23 = function(a)
+Mat23Proto._mulMat23 = function(a)
 {
   return new $jb.Math.Mat23(
     this.m11*a.m11 + this.m12*a.m21,
@@ -90,17 +95,17 @@ $jb.Math.Mat23.prototype._mulMat23 = function(a)
   );    
 };
 
-$jb.Math.Mat23.prototype._rot = function(angle)
+Mat23Proto._rot = function(angle)
 {
-  this.m11 = this.m22 = Math.cos(angle);
-  this.m12 = Math.sin(angle);
+  this.m11 = this.m22 = _cos(angle);
+  this.m12 = _sin(angle);
   this.m21 = -this.m12;
   
   return this;
 };
-$jb.Math.Mat23.prototype._rotSelf = function(angle)
+Mat23Proto._rotSelf = function(angle)
 {
-  var a = Math.cos(angle), b = Math.sin(angle);
+  var a = _cos(angle), b = _sin(angle);
   
   var m11 = a*this.m11 - b*this.m12;
   var m12 = b*this.m11 + a*this.m12;
@@ -114,13 +119,13 @@ $jb.Math.Mat23.prototype._rotSelf = function(angle)
   return this;
 };
 
-$jb.Math.Mat23.prototype._scaleX = function(aspect)
+Mat23Proto._scaleX = function(aspect)
 {
   this.m11 = aspect;
   
   return this;
 };
-$jb.Math.Mat23.prototype._scaleXSelf = function(aspect)
+Mat23Proto._scaleXSelf = function(aspect)
 {
   this.m11 *= aspect;
   this.m12 *= aspect;
@@ -128,13 +133,13 @@ $jb.Math.Mat23.prototype._scaleXSelf = function(aspect)
   
   return this;
 };
-$jb.Math.Mat23.prototype._scaleY = function(aspect)
+Mat23Proto._scaleY = function(aspect)
 {
   this.m22 = aspect;
   
   return this;
 };
-$jb.Math.Mat23.prototype._scaleYSelf = function(aspect)
+Mat23Proto._scaleYSelf = function(aspect)
 {
   this.m21 *= aspect;
   this.m22 *= aspect;
@@ -142,14 +147,14 @@ $jb.Math.Mat23.prototype._scaleYSelf = function(aspect)
   
   return this;
 };
-$jb.Math.Mat23.prototype._scale = function(aspectX, aspectY)
+Mat23Proto._scale = function(aspectX, aspectY)
 {
   this.m11 = aspectX;
   this.m22 = (aspectY != null) ? aspectY : aspectX;
   
   return this;
 };
-$jb.Math.Mat23.prototype._scaleSelf = function(aspectX, aspectY)
+Mat23Proto._scaleSelf = function(aspectX, aspectY)
 {
   if(aspectY == null)
     aspectY = aspectX;
@@ -165,33 +170,33 @@ $jb.Math.Mat23.prototype._scaleSelf = function(aspectX, aspectY)
   return this;
 };
 
-$jb.Math.Mat23.prototype._shearX = function(aspect)
+Mat23Proto._shearX = function(aspect)
 {
   this.m21 = aspect;
   
   return this;
 };
-$jb.Math.Mat23.prototype._shearXSelf = function(aspect)
+Mat23Proto._shearXSelf = function(aspect)
 {
   this.m11 += this.m12*aspect;
   this.m21 += this.m22*aspect;
   
   return this;
 };
-$jb.Math.Mat23.prototype._shearY = function(aspect)
+Mat23Proto._shearY = function(aspect)
 {
   this.m12 = aspect;
   
   return this;
 };
-$jb.Math.Mat23.prototype._shearYSelf = function(aspect)
+Mat23Proto._shearYSelf = function(aspect)
 {
   this.m12 += this.m11*aspect;
   this.m22 += this.m21*aspect;
   
   return this;
 };
-$jb.Math.Mat23.prototype._shear = function(ax, ay)
+Mat23Proto._shear = function(ax, ay)
 {
   if(ay == null)
     ay = ax;
@@ -201,7 +206,7 @@ $jb.Math.Mat23.prototype._shear = function(ax, ay)
   
   return this;
 };
-$jb.Math.Mat23.prototype._shearSelf = function(ax, ay)
+Mat23Proto._shearSelf = function(ax, ay)
 {
   if(ay == null)
     ay = ax;
@@ -218,44 +223,44 @@ $jb.Math.Mat23.prototype._shearSelf = function(ax, ay)
   return this;
 };
 
-$jb.Math.Mat23.prototype._skewX = function(angle)
+Mat23Proto._skewX = function(angle)
 {
-  this.m21 = Math.tan(angle);
+  this.m21 = _tan(angle);
   
   return this;
 };
-$jb.Math.Mat23.prototype._skewXSelf = function(angle)
+Mat23Proto._skewXSelf = function(angle)
 {
-  var a = Math.tan(angle);
+  var a = _tan(angle);
   
   this.m11 += this.m12*a;
   this.m21 += this.m22*a;
   
   return this;
 };
-$jb.Math.Mat23.prototype._skewY = function(angle)
+Mat23Proto._skewY = function(angle)
 {
-  this.m12 = Math.tan(angle);
+  this.m12 = _tan(angle);
   
   return this;
 };
-$jb.Math.Mat23.prototype._skewYSelf = function(angle)
+Mat23Proto._skewYSelf = function(angle)
 {
-  var a = Math.tan(angle);
+  var a = _tan(angle);
   
   this.m12 += this.m11*a;
   this.m22 += this.m21*a;
   
   return this;
 };
-$jb.Math.Mat23.prototype._skew = function(angleX, angleY)
+Mat23Proto._skew = function(angleX, angleY)
 {
-  var ax = Math.tan(angleX), ay;
+  var ax = _tan(angleX), ay;
 
   if(angleX == null)
     ay = ax;
   else
-    ay = Math.tan(angleY);
+    ay = _tan(angleY);
     
   var m11 = this.m11 + this.m12*ax;
   var m21 = this.m21 + this.m22*ax;
@@ -269,14 +274,14 @@ $jb.Math.Mat23.prototype._skew = function(angleX, angleY)
   return this;
 };
 
-$jb.Math.Mat23.prototype._squeeze = function(n)
+Mat23Proto._squeeze = function(n)
 {
   this.m11 = n;
   this.m22 = 1.0/n;
   
   return this;
 };
-$jb.Math.Mat23.prototype._squeezeSelf = function(n)
+Mat23Proto._squeezeSelf = function(n)
 {
   var invN = 1.0/n;
 
@@ -291,40 +296,40 @@ $jb.Math.Mat23.prototype._squeezeSelf = function(n)
   return this;
 };
 
-$jb.Math.Mat23.prototype._translateX = function(x)
+Mat23Proto._translateX = function(x)
 {
   this.m13 = x;
   
   return this;
 };
-$jb.Math.Mat23.prototype._translateXSelf = function(x, y)
+Mat23Proto._translateXSelf = function(x, y)
 {
   this.m13 += x*this.m11;
   this.m23 += x*this.m21;
   
   return this;
 };
-$jb.Math.Mat23.prototype._translateY = function(y)
+Mat23Proto._translateY = function(y)
 {
   this.m23 = y;
   
   return this;
 };
-$jb.Math.Mat23.prototype._translateYSelf = function(x, y)
+Mat23Proto._translateYSelf = function(x, y)
 {
   this.m13 += y*this.m12;
   this.m23 += y*this.m22;
   
   return this;
 };
-$jb.Math.Mat23.prototype._translate = function(x, y)
+Mat23Proto._translate = function(x, y)
 {
   this.m13 = x;
   this.m23 = y;
   
   return this;
 };
-$jb.Math.Mat23.prototype._translateSelf = function(x, y)
+Mat23Proto._translateSelf = function(x, y)
 {
   this.m13 += x*this.m11 + y*this.m12;
   this.m23 += x*this.m21 + y*this.m22;
@@ -332,7 +337,7 @@ $jb.Math.Mat23.prototype._translateSelf = function(x, y)
   return this;
 };
 
-$jb.Math.Mat23.prototype._set = function(m11, m12, m21, m22, m13, m23)
+Mat23Proto._set = function(m11, m12, m21, m22, m13, m23)
 {
   this.m11 = m11;
   this.m12 = m12;
@@ -344,14 +349,14 @@ $jb.Math.Mat23.prototype._set = function(m11, m12, m21, m22, m13, m23)
   return this;
 };
 
-$jb.Math.Mat23.prototype.toString = 
-$jb.Math.Mat23.prototype._toStyleString = 
+Mat23Proto.toString = 
+Mat23Proto._toStyleString = 
 function()
 {
-  return "matrix(" + this.m11 + "," + this.m12 + "," + this.m21 + ","+this.m22 + ","+this.m13 + ","+this.m23 + ")";
+  return 'matrix(' + this.m11 + ',' + this.m12 + ',' + this.m21 + ',' + this.m22 + ',' + this.m13 + ',' + this.m23 + ')';
 };
 /*
-$jb.Math.Mat23.prototype._fromStyleString = 
+Mat23Proto._fromStyleString = 
 function()
 {
   
