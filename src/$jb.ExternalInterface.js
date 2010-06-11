@@ -37,44 +37,59 @@
 */
 
 $jb.Loader._scope().
-_willDeclared("$jb/$jb.ei.js").
-_completed(function(){
+_willDeclared("$jb/$jb.ExternalInterface.js").
+_completed(function($G, $jb){
+
+var RegExp = $G.RegExp;
 
 /** @class class for create export symbols with alias for local objects to external scripts */
-$jb.ExternalInterface=function()
+$jb.ExternalInterface = function()
 {
   /** @var external prefix from window object to 'this'*/
-  this.prefix="";
+  this.prefix = '';
   
   /** @var next positive numeric id */
-  this.nextId_=0;
+  this.nextId_ = 0;
 };
   
-/**
-  @fn get external access code by object name
-  @param name object name string
-  @return external access code string
-*/
-$jb.ExternalInterface.prototype._nameToCode=function(name)
-{
-  if(/^\d+$/.test(name))
-    return this.prefix+"["+name+"]";
-  else  
-    return this.prefix+"[\'"+name+"\']";
-};
+/** @alias */
+var ExternalInterfaceProto = $jb.ExternalInterface.prototype;
 
-/**
-  @fn get object name by external access code 
-  @param code external access code string
-  @return object name string
-*/
-$jb.ExternalInterface.prototype._codeToName=function(code)
+(function()
 {
-  if(/\[(\'?)([\s\S]+?)\1\]/.test(code)==false)
-    return null;
-    
-  return RegExp.$2;  
-};
+  var re = /^\d+$/;
+  
+  /**
+    @fn get external access code by object name
+    @param name object name string
+    @return external access code string
+  */
+  ExternalInterfaceProto._nameToCode = function(name)
+  {
+    if(re.test(name))
+      return this.prefix + '[' + name + ']';
+    else  
+      return this.prefix + '[\'' + name + '\']';
+  };
+})();  
+
+(function()
+{
+  var re = /\[(\'?)([\s\S]+?)\1\]/;
+  
+  /**
+    @fn get object name by external access code 
+    @param code external access code string
+    @return object name string
+  */
+  ExternalInterfaceProto._codeToName = function(code)
+  {
+    if(re.test(code) == false)
+      return null;
+      
+    return RegExp.$2;  
+  };
+})();  
 
 /**
   @fn register new object 
@@ -82,31 +97,31 @@ $jb.ExternalInterface.prototype._codeToName=function(code)
   @param forceName if true no automacic name alowed if 'name' already busy
   @return object name string or null if fail
 */
-$jb.ExternalInterface.prototype._regObject=function(obj,name,forceName)
+ExternalInterfaceProto._regObject = function(obj, name, forceName)
 {
-  if(name!=null)
+  if(name != null)
   {
-    if(name in this)
+    if((name in this))
     {
-      if(forceName==true)
+      if(forceName == true)
         return null;
       
-      name=null;  
+      name = null;  
     }
   }
   
-  if(name==null)
-    name=""+this.nextId_++;
+  if(name == null)
+    name = '' + (this.nextId_++);
 
-  this[name]=obj;
+  this[name] = obj;
   
   return name;
 };
-$jb.ExternalInterface.prototype._reregObject=function(obj,name)
+ExternalInterfaceProto._reregObject = function(obj, name)
 {
-  this[name]=obj;
+  this[name] = obj;
 };
-$jb.ExternalInterface.prototype._unregObject=function(name)
+ExternalInterfaceProto._unregObject = function(name)
 {
   delete this[name];
   
@@ -114,6 +129,6 @@ $jb.ExternalInterface.prototype._unregObject=function(name)
 };
 
 // create global external interface
-$jb.ei=new $jb.ExternalInterface();
-$jb.ei.prefix="$jb.ei";
+$jb.ei = new $jb.ExternalInterface();
+$jb.ei.prefix = '$jb.ei';
 });
