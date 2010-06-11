@@ -41,7 +41,12 @@
 $jb.Loader._scope().
 //_require("$jb/$jb.nav.js").
 _willDeclared("$jb/$G.Object.js").
-_completed(function(){
+_completed(function($G, $jb){
+
+var Object = $G.Object, TypeError = $G.TypeError;
+
+/*@alias*/
+var ObjectProto = Object.prototype;
 
 if(!Object.getPrototypeOf)
 {
@@ -49,7 +54,7 @@ if(!Object.getPrototypeOf)
   {
     Object.getPrototypeOf = function(v)
     {
-      if(typeof(v) !== "object" || v == null)
+      if(typeof(v) != "object" || v == null)
         throw new TypeError();
       
       return v.__proto__;
@@ -59,7 +64,7 @@ if(!Object.getPrototypeOf)
   {
     Object.getPrototypeOf = function(v)
     {
-      if(typeof(v) !== "object" || v == null)
+      if(typeof(v) != "object" || v == null)
         throw new TypeError();
       
       return v.constructor.prototype;
@@ -67,18 +72,38 @@ if(!Object.getPrototypeOf)
   }
 }
 
-if(typeof(Object.defineProperties) !== "function")
+if(!Object.keys)
+{
+  Object.keys = function(v)
+  {
+    if(typeof(v) != "object" || v == null)
+      throw new TypeError();
+    
+    var keys = [], i = 0, key;
+    
+    for(key in v)
+    {
+      if(v.hasOwnProperty(key))
+        keys[i++] = key;
+    }
+    
+    return keys;
+  };  
+}
+
+
+if(typeof(Object.defineProperties) != 'function')
 {
   Object.defineProperties = function(to, from)
   {
     //15.2.3.7 If Type(O) is not Object throw a TypeError exception. 
-    if(to == null || typeof(to) !== 'object')
+    if(to == null || typeof(to) != 'object')
       throw TypeError();
       
     var type = typeof(from);
     
     //15.2.3.7 Let props be ToObject(Properties). 
-    if(type === 'object' || type === 'function')
+    if(type == 'object' || type == 'function')
     {
       for(var i in from)
       {
@@ -91,16 +116,16 @@ if(typeof(Object.defineProperties) !== "function")
   };
 }
 
-if(typeof(Object.create) !== "function")
+if(typeof(Object.create) != 'function')
 {
-  if("__proto__" in {})
+  if('__proto__' in {})
   {
     Object.create = function(pr, initObj)
     {
-      if(typeof(pr) !== 'object')
+      if(typeof(pr) != 'object')
         throw new TypeError();
 
-      var obj = new Object();
+      var obj = {};
         
       obj.__proto__ = pr;
       
@@ -114,12 +139,12 @@ if(typeof(Object.create) !== "function")
   {
     Object.create = function(pr, initObj)
     {
-      if(typeof(pr) !== 'object')
+      if(typeof(pr) != 'object')
         throw new TypeError();
       
       var obj;
       
-      if(pr !== Object.prototype)
+      if(pr !== ObjectProto)
       {  
         var _constructor = function(){};
     
@@ -130,7 +155,7 @@ if(typeof(Object.create) !== "function")
       }
       else
       {
-        obj = new Object();
+        obj = {};
       }
       
       if(initObj != null)
@@ -141,9 +166,9 @@ if(typeof(Object.create) !== "function")
   }  
 }
 
-if(!("propertyIsEnumerable" in {}))
+if(!('propertyIsEnumerable' in {}))
 {
-  Object.prototype.propertyIsEnumerable = function(name)
+  ObjectProto.propertyIsEnumerable = function(name)
   {
     if(!this.hasOwnProperty(name))
       return false;
@@ -178,7 +203,7 @@ if('10'.propertyIsEnumerable('0') === false &&
   (function()
   {
     var _oPropertyIsEnumerable = String.prototype.propertyIsEnumerable;
-    var re = new RegExp(/^\d+$/);
+    var re = /^\d+$/;
     
     String.prototype.propertyIsEnumerable = function(name)
     {
@@ -190,7 +215,7 @@ if('10'.propertyIsEnumerable('0') === false &&
   })();
 }
 
-Object.prototype._filterExtra = function(i, obj)
+ObjectProto._filterExtra = function(i, obj)
 {
   return obj.hasOwnProperty(i);
 };
@@ -215,11 +240,11 @@ Array.prototype._filterExtra = function(i, obj)
   return obj.hasOwnProperty(i) && !(+i >= 0); // not correct by realy fast!
 };
 
-if(Object.prototype._filterExtra.propertyIsEnumerable("prototype"))
+if(ObjectProto._filterExtra.propertyIsEnumerable('prototype'))
 {  
   Function.prototype._filterExtra = function(i, obj)
   {
-    return obj.hasOwnProperty(i) && i !== "prototype";
+    return obj.hasOwnProperty(i) && i !== 'prototype';
   };
 }
 else
@@ -246,7 +271,7 @@ else
 }
 
 // copy member by member "obj" to result
-Object.prototype._rawCopyFrom = function(src, _filter)
+ObjectProto._rawCopyFrom = function(src, _filter)
 {
   if(src == null)
     return null;
@@ -264,13 +289,13 @@ Object.prototype._rawCopyFrom = function(src, _filter)
 
   return this;
 };
-Object.prototype._rawCopyFromAsObject = Object.prototype._rawCopyFrom;
+ObjectProto._rawCopyFromAsObject = ObjectProto._rawCopyFrom;
 
 // invert target key=>value pairs to value=>key and set it to destObj or newly created object
 //
 // @param destObj optional. dest object or newly created object
 // @param _filter optional.  
-Object.prototype._invert = function(destObj, _filter)
+ObjectProto._invert = function(destObj, _filter)
 {
   var i = null;
   
@@ -288,9 +313,9 @@ Object.prototype._invert = function(destObj, _filter)
   
   return destObj;
 };
-Object.prototype._invertAsObject = Object.prototype._invert;
+ObjectProto._invertAsObject = ObjectProto._invert;
 
-Object.prototype._find = function(value, _filter)
+ObjectProto._find = function(value, _filter)
 {
   if(filter)
     _filter = this._filterExtra;
@@ -305,11 +330,11 @@ Object.prototype._find = function(value, _filter)
   
   return null;
 };
-Object.prototype._findAsObject = Object.prototype._find;
+ObjectProto._findAsObject = ObjectProto._find;
 
 if(Object.__count__ != null)
 {
-  Object.prototype._filterExtra._length = 
+  ObjectProto._filterExtra._length = 
   Number.prototype._filterExtra._length = 
   Boolean.prototype._filterExtra._length = 
   Function.prototype._filterExtra._length = 
@@ -319,7 +344,7 @@ if(Object.__count__ != null)
     return this.__count__;
   };
 
-  Object.prototype._filterExtra._isEmpty = 
+  ObjectProto._filterExtra._isEmpty = 
   Number.prototype._filterExtra._isEmpty = 
   Boolean.prototype._filterExtra._isEmpty = 
   Function.prototype._filterExtra._isEmpty = 
@@ -360,9 +385,9 @@ if(Object.__count__ != null)
   };
 }
 
-Object.prototype._length = null;
+ObjectProto._length = null;
 
-Object.prototype._length = function(_filter)
+ObjectProto._length = function(_filter)
 {
   if(_filter == null)
     _filter = this._filterExtra;
@@ -382,9 +407,9 @@ Object.prototype._length = function(_filter)
   
   return n;
 };
-Object.prototype._lengthAsObject = Object.prototype._length;
+ObjectProto._lengthAsObject = ObjectProto._length;
 
-Object.prototype._isEmpty = function(_filter)
+ObjectProto._isEmpty = function(_filter)
 {
   if(_filter == null)
     _filter = this._filterExtra;
@@ -404,6 +429,6 @@ Object.prototype._isEmpty = function(_filter)
   
   return true;
 };
-Object.prototype._isEmptyAsObject = Object.prototype._isEmpty;
+ObjectProto._isEmptyAsObject = ObjectProto._isEmpty;
 
 });
