@@ -38,38 +38,38 @@
 
 $jb.Loader._scope().
 _willDeclared("$jb/Random.LCG.js").
-_completed(function(){
+_completed(function($G, $jb){
 
 /** @namespace(Random) contains different random generator classes */
-if($jb.Random==null)
-  $jb.Random={};
+if($jb.Random == null)
+  $jb.Random = {};
 
 /** 
   @class represent classic pseudo-random linear congruential generator rand_[i]=(a*rand_[i-1]+c)&mAsMask, ret=rand_[i]&outputMask, ++i
   @param set ref to Object {a,c,mAsMask,outputMask} or one of predefined from $jb.Random.LCG.prototype.setMap. Optional
 */
-$jb.Random.LCG=function(set)
+$jb.Random.LCG = function(set)
 {
   /** @var last generated value */
-  this.rand_=0;
+  this.rand_ = 0;
   
-  if(set!=null)
+  if(set != null)
   {
     this._setup(set);
   }
   else
   {
     /** @var a coef */
-    this.a=25173;
+    this.a = 25173;
     
     /** @var c coef */
-    this.c=13849;
+    this.c = 13849;
 
     /** @var mAsMask */
-    this.mAsMask=0xffff;
+    this.mAsMask = 0xffff;
     
     /** @var output mask */
-    this.outputMask=0x7FFFFFFF;
+    this.outputMask = 0x7FFFFFFF;
   }
 };
 
@@ -77,9 +77,9 @@ $jb.Random.LCG=function(set)
   @fn set initial rand
   @return this
 */
-$jb.Random.LCG.prototype._seed=function(rand)
+$jb.Random.LCG.prototype._seed = function(rand)
 {
-  this.rand_=rand;
+  this.rand_ = rand;
   
   return this;
 };
@@ -87,9 +87,9 @@ $jb.Random.LCG.prototype._seed=function(rand)
   @fn generate next rand
   @return generated rand
 */
-$jb.Random.LCG.prototype._rand=function()
+$jb.Random.LCG.prototype._rand = function()
 {
-  return (this.rand_ = ((this.rand_*this.a+this.c)&this.mAsMask))&this.outputMask;
+  return (this.rand_ = ((this.rand_*this.a + this.c)&this.mAsMask))&this.outputMask;
 };
 
 /**
@@ -97,57 +97,57 @@ $jb.Random.LCG.prototype._rand=function()
   @see $jb.Random.LCG.prototype.setMap
   @return this
 */
-$jb.Random.LCG.prototype._setup=function(set)
+$jb.Random.LCG.prototype._setup = function(set)
 {
-  if(set==null)
+  if(set == null)
     return this;
   
-  this.a=set.a;
-  this.c=set.c;
-  this.mAsMask=set.mAsMask;
-  this.outputMask=set.outputMask;
+  this.a = set.a;
+  this.c = set.c;
+  this.mAsMask = set.mAsMask;
+  this.outputMask = set.outputMask;
   
   return this;
 };
 
 // http://en.wikipedia.org/wiki/Linear_congruential_generator
 /** @var predefined random coefs set map "name" -> set */
-$jb.Random.LCG.prototype.setMap=
+$jb.Random.LCG.prototype.setMap =
 {
   "Numerical Recipes":
   {
-    a:1664525,
-    c:1013904223,
-    mAsMask:0xFFFFFFFF,
-    outputMask:0xFFFFFFFF
+    a: 1664525,
+    c: 1013904223,
+    mAsMask: 0xFFFFFFFF,
+    outputMask: 0xFFFFFFFF
   },
   "Borland C/C++":
   {
-    a:22695477,
-    c:1,
-    mAsMask:0xFFFFFFFF,
-    outputMask:0x7FFFFFFF
+    a: 22695477,
+    c: 1,
+    mAsMask: 0xFFFFFFFF,
+    outputMask: 0x7FFFFFFF
   },
   "glibc":
   {
-    a:1103515245,
-    c:12345,
-    mAsMask:0xFFFFFFFF,
-    outputMask:0x7FFFFFFF
+    a: 1103515245,
+    c: 12345,
+    mAsMask: 0xFFFFFFFF,
+    outputMask: 0x7FFFFFFF
   },
   "ANSI C":
   {
-    a:1103515245,
-    c:12345,
-    mAsMask:0xFFFFFFFF,
-    outputMask:0x7FFF0000
+    a: 1103515245,
+    c: 12345,
+    mAsMask: 0xFFFFFFFF,
+    outputMask: 0x7FFF0000
   },
   "Microsoft Visual/Quick C/C++":
   {
-    a:214013,
-    c:2531011,
-    mAsMask:0xFFFFFFFF,
-    outputMask:0x7FFF0000
+    a: 214013,
+    c: 2531011,
+    mAsMask: 0xFFFFFFFF,
+    outputMask: 0x7FFF0000
   }
 };
 
