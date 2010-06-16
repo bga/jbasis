@@ -40,7 +40,7 @@ _require("$jb/$G.Number.js"). // ._fixupIntToUIntBug
 _willDeclared("$jb/$jb.Preprocessor.js").
 _completed(function($G, $jb){
 
-var RegExp = $G.RegExp;
+var RegExp = $G.RegExp, Math = $G.Math;
 
 $jb.Preprocessor = function()
 {
@@ -315,45 +315,45 @@ PreprocessorProto.__matchArg = function(s, p)
         if(bracketCount == 0)
           return comma;
         
-        comma = s.indexOf(',', ++p) >>> 0;
+        p = comma + 1;
         break;
       case openBracket:
         //console.log('openBracket');
         ++bracketCount;
-        openBracket = s.indexOf('(', (p = openBracket + 1)) >>> 0;
+        p = openBracket + 1;
         break;
       case closeBracket:
         //console.log('closeBracket');
         if(--bracketCount == -1)
           return closeBracket;
           
-        closeBracket = s.indexOf(')', (p = closeBracket + 1)) >>> 0;
+        p = closeBracket + 1;
         
         break;
       case openSquareBracket:
         //console.log('openSquareBracket');
         ++bracketCount;
-        openSquareBracket = s.indexOf('[', (p = openSquareBracket + 1)) >>> 0;
+        p = openSquareBracket + 1;
         break;
       case closeSquareBracket:
         //console.log('closeSquareBracket');
         if(--bracketCount == -1)
           return closeSquareBracket;
           
-        closeSquareBracket = s.indexOf(']', (p = closeSquareBracket + 1)) >>> 0;
+        p = closeSquareBracket + 1;
         
         break;
       case openCurlyBracket:
         //console.log('openCurlyBracket');
         ++bracketCount;
-        openCurlyBracket = s.indexOf('{', (p = openCurlyBracket + 1)) >>> 0;
+        p = openCurlyBracket + 1;
         break;
       case closeCurlyBracket:
         //console.log('closeCurlyBracket');
         if(--bracketCount == -1)
           return closeCurlyBracket;
           
-        closeCurlyBracket = s.indexOf('}', (p = closeCurlyBracket + 1)) >>> 0;
+        p = closeCurlyBracket + 1;
         
         break;
       case singleQuote:
@@ -367,13 +367,9 @@ PreprocessorProto.__matchArg = function(s, p)
         while(p > -1  && s.charAt(p - 1) == '\\');
         
         if(p > -1)
-        {
-          dblQuote = s.indexOf('\'', ++p) >>> 0;
-        }
+          ++p;
         else
-        {
-          dblQuote = s.indexOf('\'', (p = op + 1)) >>> 0;
-        }
+          p = op + 1;
         
         break;
       case dblQuote:
@@ -387,40 +383,36 @@ PreprocessorProto.__matchArg = function(s, p)
         while(p > -1  && s.charAt(p - 1) == '\\');
         
         if(p > -1)
-        {
-          dblQuote = s.indexOf('"', ++p) >>> 0;
-        }
+          ++p;
         else
-        {
-          dblQuote = s.indexOf('"', (p = op + 1)) >>> 0;
-        }
+          p = op + 1;
         
         break;
       case blockComment:
         //console.log('blockComment');
-        p = s.indexOf('*/', (op = p) + 2) >>> 0;
+        p = s.indexOf('*/', blockComment + 2) >>> 0;
 
         if(p == 4294967295)
         {
-          blockComment = p; p = op;
+          blockComment = p; p = blockComment;
         }
         else
         {
-          blockComment = s.indexOf('/*', p  += 2) >>> 0;
+          p  += 2;
         }
         
         break;
       case lineComment:
         //console.log('lineComment');
-        p = s.indexOf('\n', (op = p) + 2) >>> 0;
+        p = s.indexOf('\n', lineComment + 2) >>> 0;
 
         if(p == 4294967295)
         {
-          lineComment = p; p = op;
+          lineComment = p; p = lineComment;
         }
         else
         {
-          lineComment = s.indexOf('//', ++p) >>> 0;
+          ++p;
         }
         
         break;
@@ -435,13 +427,9 @@ PreprocessorProto.__matchArg = function(s, p)
         while(p > -1  && s.charAt(p - 1) == '\\');
         
         if(p > -1)
-        {
-          regExp = s.indexOf('/', ++p) >>> 0;
-        }
+          ++p;
         else
-        {
-          regExp = s.indexOf('/', (p = op + 1)) >>> 0;
-        }
+          p = op + 1;
         
         break;
     }
