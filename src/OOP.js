@@ -216,24 +216,7 @@ var Object = $G.Object, Function = $G.Function;
 */
 Function.prototype._staticDeriveFrom = function(_constuctor)
 {
-  var i, dpr = this.prototype, spr = _constuctor.prototype;
-  
-  if(Object.getPrototypeOf(dpr) === Object.getPrototypeOf(spr))
-  {
-    for(i in spr)
-    {
-      if(!(i in dpr))
-        dpr[i] = spr[i];
-    };
-  }
-  else
-  {
-    for(i in spr)
-    {
-      if(spr.hasOwnProperty(i) && !(i in dpr))
-        dpr[i] = spr[i];
-    };
-  }
+  this.prototype._extendFrom(_constuctor.prototype);
   
   return this;
 };
