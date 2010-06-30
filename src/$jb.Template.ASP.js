@@ -38,20 +38,24 @@ $jb.Loader._scope().
 //_require("$jb/$G.Function.js").
 _require("$jb/$jb.nav.js").
 _require("$jb/$G.String.js").
-_willDeclared("$jb/$jb.Template.js").
+_willDeclared("$jb/$jb.Template.ASP.js").
 _completed(function($G, $jb){
 
-$jb.Template = function(text)
+if($jb.Template == null)
+  $jb.Template = {};
+
+$jb.Template.ASP = function(text, argNames)
 {
   if(text != null)
-    this._compile(text);  
+    this._compile(text, argNames);  
   
   this.text;
+  this.argNames;
   this.__compiled;
 };
 
 /** @alias */
-var TemplateProto = $jb.Template.prototype;
+var TemplateASPProto = $jb.Template.ASP.prototype;
 
 (function()
 {
@@ -70,7 +74,7 @@ var TemplateProto = $jb.Template.prototype;
     };
     var extraConcatOPRE = /\/\/jb\n\,\);/g;
     
-    TemplateProto._compile = function(text)
+    TemplateProto._compile = function(text, argNames)
     {
       if(text == null)
         text = this.text;
@@ -78,7 +82,7 @@ var TemplateProto = $jb.Template.prototype;
       if(text === this.text && this.__compiled)
         return this;
         
-      this.__compiled = new Function('',
+      this.__compiled = new Function(argNames || '',
       //$G._log(  
         "var jbTmlTexts = [],\n\
         _jbTmlJoin = Array.prototype.join,\n\
@@ -94,6 +98,9 @@ var TemplateProto = $jb.Template.prototype;
         ).replace(extraConcatOPRE, ');')
       );
 
+      this.text = text;
+      this.argNames = argNames;
+
       return this;
     };
   }
@@ -105,7 +112,7 @@ var TemplateProto = $jb.Template.prototype;
     };
     var extraConcatOPRE = /\/\/jb\n\+;/g;
     
-    TemplateProto._compile = function(text)
+    TemplateASPProto._compile = function(text, argNames)
     {
       if(text == null)
         text = this.text;
@@ -113,7 +120,7 @@ var TemplateProto = $jb.Template.prototype;
       if(text === this.text && this.__compiled)
         return this;
         
-      this.__compiled = new Function('',
+      this.__compiled = new Function(argNames || '',
       //$G._log(  
         "var jbTmlText,\n\
         _jbTmlJoin = Array.prototype.join,\n\
@@ -129,17 +136,20 @@ var TemplateProto = $jb.Template.prototype;
         ).replace(extraConcatOPRE, ';')
       );
 
+      this.text = text;
+      this.argNames = argNames;
+      
       return this;
     };
   }  
 })();  
 
-TemplateProto._apply = function(that)
+TemplateASPProto._apply = function(that, args)
 {
   if(typeof(this.__compiled) != 'function')
-    throw "template not compiled";
+    throw 'template not compiled';
   
-  return this.__compiled.call(that);
+  return (args != null) ? this.__compiled.apply(that, args) : this.__compiled.call(that);
 };
 
 });
