@@ -294,353 +294,95 @@ Loader.__set_DOMNodeLoaded = function(v, _fn)
   
 })();
 
+Loader._findResourceLoadingUrls = function(resouce)
+{
+  //var L = Loader;
+  
+  var _callback = function(url, isLoaded)
+  {
+    //console.log(url+" "+isLoaded);
+    Loader_urlLoadStatusMap[url] = isLoaded;
+    Loader_declaredUrlMap[url] = true;
+  };
+
+  resouce._findLoadingUrls(_callback);
+};
 
 Loader.extToMimeMap =
 {
   '.js': 'text/javascript',
-  '.css': 'text/css',
-  '.jpg': 'image/jpeg',
-  '.gif': 'image/gif',
-  '.png': 'image/png'
+};
+
+
+Loader.JSResource = function()
+{
+  Loader._findResourceLoadingUrls(this);
+};
+
+/** @alias */
+var JSResourceProto = Loader.JSResource.prototype;
+
+JSResourceProto.canDeclareSelf = true;
+
+(function()
+{
+  var re = /text\/javascript.*|application\/(x-)?javascript.*|application\/ecmascript/;
+  
+  JSResourceProto._isSameMime = function(mime)
+  {
+    return re.test(mime);
+  };
+})();  
+
+JSResourceProto._findLoadingUrls = function(_callback)
+{
+  var /* L = Loader, */
+    ss = $h.getElementsByTagName('script'),
+    src, i = -1, s, 
+    _fullUrlC = _fullUrl, __isDOMNodeLoaded = Loader.__isDOMNodeLoaded;
+  
+  while((s = ss[++i]))
+  {
+    if((src = s.getAttribute('src')) != null)
+      _callback(_fullUrlC(src), __isDOMNodeLoaded(s));
+  }
+};
+
+JSResourceProto._load = function(mime, url, _result)
+{
+  var L = Loader,
+    s = $d.createElement('script');
+  
+  s.src = url;
+  s.type = mime;
+  //s.defer=true;
+  
+  if(_result != null)
+  {
+    L.__set_DOMNodeLoaded
+    (
+      s,
+      function(v, isLoaded)
+      {
+        _result(url, isLoaded);
+      }  
+    );
+  }  
+
+  setTimeout(
+    function()
+    {
+      $h.appendChild(s);
+    },
+    0
+  );
+  
+  return null;
 };
 
 Loader.resouceTypes =
 [
-  {
-    canDeclareSelf: true,
-    _isSameMime : function(mime)
-    {
-      return /text\/javascript.*|application\/(x-)?javascript.*|application\/ecmascript/.test(mime);
-    },  
-    _findLoadingUrls: function(_callback)
-    {
-      var /* L = Loader, */
-        ss = $h.getElementsByTagName('script'),
-        src, i = -1, s, 
-        _fullUrlC = _fullUrl, __isDOMNodeLoaded = Loader.__isDOMNodeLoaded;
-      
-      while((s = ss[++i]))
-      {
-        if((src = s.getAttribute("src")) != null)
-          _callback(_fullUrlC(src), __isDOMNodeLoaded(s));
-      }
-    },
-    _load: function(mime, url, _result)
-    {
-      var L = Loader,
-        s = $d.createElement("script");
-      
-      s.src = url;
-      s.type = mime;
-      //s.defer=true;
-      
-      if(_result != null)
-      {
-        L.__set_DOMNodeLoaded
-        (
-          s,
-          function(v, isLoaded)
-          {
-            _result(url, isLoaded);
-          }  
-        );
-      }  
-
-      setTimeout(
-        function()
-        {
-          $h.appendChild(s);
-        },
-        0
-      );
-      
-      return null;
-    }
-  },
-  {
-    canDeclareSelf: false,
-    _isSameMime: function(mime)
-    {
-      return /text\/css/.test(mime);
-    },  
-    sheetName_: ($d.recalc) ? "styleSheet" : "sheet", 
-    _findLoadingUrls:function(_callback)
-    {
-      var /* L = Loader,*/
-        ls = $h.getElementsByTagName('link'),
-        href, i = -1, link,
-        sheetName = this.sheetName_,
-        _fullUrlC = _fullUrl;
-      
-      while(link = ls[++i])
-      {
-        if(link.getAttribute('rel') == 'stylesheet' && (href = link.getAttribute('href')) != null)
-          _callback(_fullUrlC(href), link[sheetName] != null);
-      }
-    },
-    _load: 
-    ($w.opera || $d.recalc) ?
-    function(mime, url, _result)
-    {
-      var L = Loader,
-        link = $d.createElement("link"),
-        self = this;
-      
-      //s.defer=true;
-      
-      if(_result != null)
-      {
-        L.__set_DOMNodeLoaded
-        (
-          link,
-          function(v, isLoaded)
-          {
-            _result(url, isLoaded && link[self.sheetName_]);
-          }  
-        );
-      }  
-
-      link.type = mime;
-      link.rel = 'stylesheet';
-      link.href = url;
-
-      $h.appendChild(link);
-      
-      return null;
-    } : ($G.WebKitPoint || $w.navigator.mozIsLocallyAvailable) ?
-    (function()
-    {
-      var
-        nextId = 0, dataMap = {},      
-        _insertLink = function(url, mime)
-        {
-          var link = $d.createElement('link');
-          
-          link.type = mime;
-          link.rel = 'stylesheet';
-          link.href = url;
-
-          $h.appendChild(link);
-        },
-        _cleanUp, _onObjLoad, _fOnTimeout;
-      
-      if($w.navigator.mozIsLocallyAvailable) // ff
-      {
-        var iframe = $h.appendChild($d.createElement('iframe')), iframeDocEl,
-          _insertScript = function(url, data)
-          {
-            var script = $d.createElement('script');
-            
-            script.type = 'text/javascript';
-            script.src = url;
-            script.onerror = _onScriptError;
-            script.jb_ = data;
-
-            iframeDocEl.appendChild(script);
-          },
-          _cleanUp = function(jb)
-          {
-            delete dataMap[jb.selfId]; 
-            jb.obj.parentNode.removeChild(jb.obj)
-            
-            var script = jb.script;
-            
-            if(script)
-            {
-              script.onerror = script.jb_ = null;
-              script.parentNode.removeChild(script);
-            }
-          },
-          _onObjLoad = function()
-          {
-            //console.log("_onObjLoad");
-            var jb = dataMap[this.getAttribute('jbLoaderDataId')]; 
-            
-            _insertLink(jb.url, jb.mime);
-            
-            jb._fn(jb.url, true);
-            
-            if(jb.script)
-              jb.script.onerror = null;
-            else
-              clearTimeout(jb.timeoutId);
-            
-            setTimeout(function(){ _cleanUp(jb); }, 0);  
-          },
-          _onScriptError = function()
-          {
-            //console.log("_onScriptError");
-            var jb = this.jb_;
-            
-            jb.obj.onload = null;
-            jb._fn(jb.url, false);
-            
-            setTimeout(function(){ _cleanUp(jb); }, 0);  
-          },
-          _fOnTimeout = function(data)
-          {
-            return function()
-            {
-              data.script = _insertScript(data.url, data);
-            };
-          };  
-
-        iframeDocEl = iframe.contentWindow.document;
-      
-        iframeDocEl.open();
-        iframeDocEl.write('<html></html>');
-        iframeDocEl.close();
-        
-        iframeDocEl = iframeDocEl.documentElement;
-      }
-      else // webkit
-      {
-        var
-          _cleanUp = function(jb)
-          {
-            delete dataMap[jb.selfId]; 
-            jb.obj.parentNode.removeChild(jb.obj)
-          },
-          _onObjLoad = function()
-          {
-            //console.log("_onObjLoad");
-            var jb = dataMap[this.getAttribute('jbLoaderDataId')]; 
-            
-            _insertLink(jb.url, jb.mime);
-            
-            jb._fn(jb.url, true);
-            
-            if(jb.timeoutId)
-              clearTimeout(jb.timeoutId);
-            
-            if(jb.sheetPollThreadId)
-              clearInterval(jb.sheetPollThreadId);
-            
-            setTimeout(function(){ _cleanUp(jb); }, 0);  
-          },
-          _sheetPollThread = function(jb)
-          {
-            if(--jb.attempCount > 0 && !jb.obj.sheet)
-              return;
-            
-            //console.log("_onScriptError");
-            
-            jb.obj.onload = null;
-            jb._fn(jb.url, false);
-            clearInterval(jb.sheetPollThreadId);
-            
-            _cleanUp(jb);
-          },
-          _fOnTimeout = function(data)
-          {
-            return function()
-            {
-              data.timeoutId = null;
-              data.attempCount = 120;
-              data.sheetPollThreadId = setInterval(function(){ _sheetPollThread(data); }, 250);
-            };
-          };  
-      }
-        
-      return function(mime, url, _result)
-      {
-        var L = Loader, obj, data;
-        
-        if(_result == null)
-        {
-          _insertLink(url, mime);
-          
-          return null;
-        }
-        
-        obj = $d.createElement("object");
-        
-        dataMap[nextId] = data = {url: url, mime: mime, _fn: _result, obj: obj, selfId:nextId};
-        obj.data = url;
-        obj.setAttribute('jbLoaderDataId', nextId);
-        obj.onload = _onObjLoad;
-        obj.width = obj.height = 1;
-        obj.style.display = 'block';
-        ($d.body || $de).appendChild(obj);
-        
-        data.timeoutId = setTimeout(_fOnTimeout(data), 5000);
-        
-        ++nextId;
-        
-        return null;
-      }
-    })() : null
-  },
-  {
-    canDeclareSelf: false,
-    _isSameMime: function(mime)
-    {
-      return /image\/.*/.test(mime);
-    },  
-    _findLoadingUrls: function(_callback)
-    {
-    },
-    // http://lucassmith.name/2008/11/is-my-image-loaded.html
-    _load: (function()
-    {
-      var prop;
-      
-      (function()
-      {
-        var img = new Image();
-        
-        try
-        {
-          img.src = "dddwndkj://jh.knkjnkjwn/jbbj.nnj";
-        }
-        catch(err)
-        {
-        
-        };
-        
-        if(typeof(img.naturalWidth) != 'undefined')
-          prop = 'naturalWidth';
-        else
-          prop = 'width';
-      })();  
-      
-      return function(mime, url, _result)
-      {
-        var L = Loader,
-          image = new Image();
-        
-        image.src = url;
-        
-        if(image.complete)
-        {
-          var isLoaded = image[prop] > 0;
-          
-          if(_result != null)
-            _result(url, isLoaded);
-            
-          return isLoaded;  
-        }
-
-        if(_result != null)
-        {
-          image.onload = function()
-          {
-            image.onerror = null;
-            
-            setTimeout(function(){ image.onload = null; _result(url, true); }, 0);
-          };
-          image.onerror = function()
-          {
-            image.onload = null;
-            
-            setTimeout(function(){ image.onerror = null; _result(url, false); }, 0);
-          };
-        }  
-
-        return null;
-      };
-    })()
-  }
+  (Loader.jsResource = new Loader.JSResource())
 ];
 
 
@@ -836,28 +578,13 @@ Loader._status = function()
   }
   
   if(s != '')
-    t += '/* non completed Loader_scopes */\n' + s;
+    t += '/* non completed $jb.Loader.scopes */\n' + s;
   else
-    t += '/* all Loader_scopes are completed */\n';
+    t += '/* all $jb.Loader.scopes are completed */\n';
   
   return t;
 };
 
-Loader.__init = function()
-{
-  var L = Loader,
-    rTupes = L.resouceTypes, i = rTupes.length;
-  
-  var _callback = function(url, isLoaded)
-  {
-    //console.log(url+" "+isLoaded);
-    Loader_urlLoadStatusMap[url] = isLoaded;
-    Loader_declaredUrlMap[url] = true;
-  };
-
-  while(i--)
-    rTupes[i]._findLoadingUrls(_callback);
-};
 
 /** @class represent scope interface */
 Loader.Scope = function()
@@ -939,7 +666,7 @@ ScopeProto._willDeclared = function(url)
 /**
   @fn declare all urls marked as will declared  
 */ 
-ScopeProto._declareUrl=function()
+ScopeProto._declareUrl = function()
 {
   var _declareUrl = Loader._declareUrl,
     obj = this.willDeclareMap_;
@@ -989,6 +716,7 @@ ScopeProto.__resourceDeclared = function(url)
   if(this.pendingUrlCount_ > 0)
     return 0;
   
+  // TODO call via setTimeout and stack system
   if(this.__completed != null)
     this.__completed($G, $jb);
   
@@ -1007,7 +735,5 @@ Loader._scope = function()
 {
   return new Loader.Scope();
 };
-
-Loader.__init();
 
 })($G);
