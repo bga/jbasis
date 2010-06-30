@@ -125,7 +125,7 @@ XHRProto.__stateChangedReal = function()
   else
   {
     if(this._acceptStatus != null && !this._acceptStatus(status))
-      this._fireEvent('error', this, [xhr, new InvalidStatusError()]);
+      this._fireEvent('error', this, [this, new InvalidStateError()]);
     else
       this._fireEvent('dataReceived', this, [this]);
   }
