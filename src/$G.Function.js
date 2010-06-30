@@ -220,10 +220,12 @@ else
 {
   $jb._fConstC.__fRet = function()
   {
-    return function()
+    var _self = function()
     {
-      return arguments.callee.c;
+      return _self.c;
     };
+    
+    return _self;
   };
 }
 
@@ -274,12 +276,12 @@ else
 {
   FunctionProto._fBindC.__fRet = function()
   {
-    return function()
+    var _self = function()
     {
-      var _self = arguments.callee;
-      
       return _self._fn.apply(_self.that || this, _self.args || arguments);
     };
+    
+    return _self;
   };
 }
 
@@ -371,10 +373,12 @@ else
 {
   FunctionProto._fNewC.__fRet = function()
   {
-    return function()
+    var _self = function()
     {
-      return new arguments.callee._fn();
+      return new _self._fn();
     };
+    
+    return _self; 
   };
 }
 
@@ -423,12 +427,12 @@ else
 {
   FunctionProto._fWrapC.__fRet = function()
   {
-    return function()
+    var _self = function()
     {
-      var _self = arguments.callee;
-      
       return _self._wrapper((arguments.length > 0) ? _self._fn.apply(this, arguments) : _self._fn.call(this));
     };
+    
+    return _self;
   };
 }
 
