@@ -144,7 +144,7 @@ Loader.locProt_ = '' + location.protocol;
 
 /** @var precomputed value of location protocol and hostname */
 Loader.locProt_ = location.protocol;
-Loader.locProtAndHost_ = location.protocol + '//' + location.hostname;
+Loader.locProtAndHost_ = location.protocol + '//' + location.hostname + ':' + (('' + location.port) || '80');
 
 /** @var precached value of location pathname */
 Loader.locPath_ = '' + location.pathname;
