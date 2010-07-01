@@ -37,7 +37,7 @@
 $jb.Loader._scope().
 //_require("$jb/$jb.EventTarget.js").
 _require("$jb/$jb.nav.js").
-_willDeclared("$jb/$jb.Loader.CSSResouce.js").
+_willDeclared("$jb/$jb.Loader.CSSResource.js").
 _completed(function($G, $jb){
 
 /*
@@ -47,29 +47,29 @@ if($jb.Loader == null)
 
 $jb.Loader.extToMimeMap['.css'] = 'text/css';
 
-$jb.Loader.CSSResouce = function()
+$jb.Loader.CSSResource = function()
 {
 
 };
 
 /** @alias */
-var CSSResouceProto = $jb.Loader.CSSResouce.prototype;
+var CSSResourceProto = $jb.Loader.CSSResource.prototype;
 
-CSSResouceProto.canDeclareSelf = false;
+CSSResourceProto.canDeclareSelf = false;
 
 (function()
 {
   var re = /text\/css/;
   
-  CSSResouceProto._isSameMime = function(mime)
+  CSSResourceProto._isSameMime = function(mime)
   {
     return re.test(mime);
   };
 })();  
   
-CSSResouceProto.sheetName_ = ($jb.nav._ie()) ? 'styleSheet' : 'sheet';
+CSSResourceProto.sheetName_ = ($jb.nav._ie()) ? 'styleSheet' : 'sheet';
  
-CSSResouceProto._findLoadingUrls = function(_callback)
+CSSResourceProto._findLoadingUrls = function(_callback)
 {
   var /* L = Loader,*/
     ls = $h.getElementsByTagName('link'),
@@ -86,7 +86,7 @@ CSSResouceProto._findLoadingUrls = function(_callback)
 
 if($jb.nav._opera() || $jb.nav._ie())
 {
-  CSSResouceProto._load = function(mime, url, _result)
+  CSSResourceProto._load = function(mime, url, _result)
   {
     var L = $jb.Loader,
       link = $d.createElement('link'),
@@ -113,10 +113,11 @@ if($jb.nav._opera() || $jb.nav._ie())
     $h.appendChild(link);
     
     return null;
-  } :
+  }
+}  
 else if($jb.nav._webkit() || $jb.nav._ff())
 {
-  CSSResouceProto._load = (function()
+  CSSResourceProto._load = (function()
   {
     var
       nextId = 0, dataMap = {},      
@@ -252,7 +253,7 @@ else if($jb.nav._webkit() || $jb.nav._ff())
       
     return function(mime, url, _result)
     {
-      var L = Loader, obj, data;
+      var L = $jb.Loader, obj, data;
       
       if(_result == null)
       {
@@ -281,10 +282,10 @@ else if($jb.nav._webkit() || $jb.nav._ff())
 }
 else
 {
-  CSSResouceProto._load = null;
+  CSSResourceProto._load = null;
 }  
 
-$jb.Loader.resouceTypes.push((Loader.cssResource = new $jb.Loader.CSSResouce()))
+$jb.Loader.resouceTypes.push(($jb.Loader.cssResource = new $jb.Loader.CSSResource()))
 
 
 
