@@ -49,9 +49,9 @@ $jb.I18n = function()
 $jb.I18n.prototype.langsMap = {};
   
 
-$jb.I18n.prototype._loadLang = function(name, _result)
+$jb.I18n.prototype._loadLang = function(url, _result)
 {
-  $jb.Loader._load('$i10n/'+name+'.js', _result);
+  $jb.Loader._load(url, _result);
 };
 
 $jb.I18n.prototype._selectLang = function(name)
@@ -73,7 +73,7 @@ $jb.I18n.prototype._translate = function(str)
 
 $jb.I18n.prototype._format = function(str, args)
 {
-  return (this.formatTmlMap[str] || (this.formatTmlMap[str] = new $jb.Template.ASP(str))._apply(this, args); 
+  return (this.formatTmlMap[str] || (this.formatTmlMap[str] = new $jb.Template.ASP(str)))._apply(this, args); 
 };
 
 $jb.I18n.prototype._date = function(d)
@@ -92,7 +92,7 @@ $jb.I18n.prototype._dateTime = function(d)
 };
 
 // big thx to y8
-I18n.prototype._pluralize = function(n, one, few, many, other)
+$jb.I18n.prototype._pluralize = function(n, one, few, many, other)
 {
   var n = this % 10, nn = this % 100;
   
