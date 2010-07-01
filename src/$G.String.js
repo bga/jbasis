@@ -224,10 +224,12 @@ else
         case '\\': return '\\\\';
         case '\n': return '\\n';
         case '\r': return '\\r';
+        case '\'': return '\\\'';
         case '\"': return '\\\"';
         case '\t': return '\\t';
         case '\b': return '\\b';
         case '\f': return '\\f';
+        case '\v': return '\\v';
         default: return c;
       }
     };
@@ -236,14 +238,14 @@ else
   {
     var map =
     {
+      '\\': '\\\\',
       '\n': '\\n',
       '\r': '\\r',
-      '\\': '\\\\',
       '\'': '\\\'',
-      '\'': '\\\'',
+      '\"': '\\\"',
       '\t': '\\t',
-      '\f': '\\f',
       '\b': '\\b',
+      '\f': '\\f',
       //'\a':'\\a',
       '\v': '\\v'
     };
