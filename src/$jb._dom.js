@@ -41,7 +41,8 @@ $jb.Loader._scope().
 //_require("$jb/$G.Array.js").
 _require("$jb/$G.Object.js").
 _require("$jb/OOP.js").
-_require("$jb/_3rdParty/jQuery/jquery.1.4.2.min.js", true).
+_require("$jb/_3rdParty/jQuery/jquery-1.4.2.min.js", true).
+//_require("$jb/_3rdParty/jQuery/jquery-1.3.2.js", true).
 _willDeclared("$jb/$jb._dom.js").
 _completed(function($G, $jb){
 
@@ -68,9 +69,11 @@ for(var i in jqProto)
   if(
     jqProto.hasOwnProperty(i) &&
     typeof(jqProto[i]) == 'function' &&
-    i.charAt(0) != '_'
+    i.charAt(0) != '_' 
   )
+  {
     jqProto['_' + i] = jqProto[i];
+  }
 }
 
 $jb.DOM.attrMap = _jq.attrMap = jqProto.attrMap = {};
@@ -152,6 +155,8 @@ jqProto._removeAttr = function(name)
   return this;
 };
 
+//var _jqProtoVal = jqProto.val;
+
 jqProto._val = function(value)
 {
   var v;
@@ -161,9 +166,9 @@ jqProto._val = function(value)
     if(this.length)
     {
       if((v = _data(this[0], 'jbDomEl')))
-        return v._val(value);
+        return v._val();
       else  
-        return _dom(this[0]).val(value);
+        return _dom(this[0]).val();
     }
     else
     {
@@ -171,14 +176,19 @@ jqProto._val = function(value)
     }
   }
 
-  var i = this.length;
+  var i = this.length, _jqProtoVal = jqProto._val;
   
   while(i--)
   {  
-    if((v = _data(this[i], 'jbDomEl')))
+    if((v = _data(this[i], 'jbDomEl')) && v._val !== _jqProtoVal)
+    {  
       v._val(value);
-    else  
+    }
+    else
+    {
+      //_jqProtoVal.call(_dom(this[i]), value);
       _dom(this[i]).val(value);
+    }
   }
   
   return this;
