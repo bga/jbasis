@@ -188,7 +188,7 @@ NavProto.__detectUserAgent = function()
     this.opera_ = +$w.opera.version();
     this.uaId_ = (this.uaName_ = 'Opera') + '\t' + this.opera_;  
   }
-  else if(typeof($w.WebKitPoint) === 'function') /* for example */
+  else if('WebKitPoint' in $w) /* for example */
   {
     if(/WebKit[\/\s](\d+\.\d+)/.test(t))
       this.webkit_ = +RegExp.$1;
