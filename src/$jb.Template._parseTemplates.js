@@ -78,7 +78,7 @@ $jb.Template._parseTemplates = function(text, url, exportMap, _result, _error)
     if((i = match.indexOf('argNames=')) > -1)
       argNames = match.slice((i = match.indexOf('"', (i += 7)) + 1), match.indexOf('"', i));
     else
-      argNames = '';
+      _error(url, 'no "argNames" attr in $jb.Template._parseTemplates');
       
     i = text.indexOf('</script>', ++j);
     
