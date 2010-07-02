@@ -36,17 +36,19 @@
 
 $jb.Loader._scope().
 //_require("$jb/$G.String.js").
-_require("$jb/$jb.Template.ASP.js").
+_require("$jb/$jb.Template.Arguments.js").
 _willDeclared("$jb/$jb.I18n.js").
 _completed(function($G, $jb){
 
 $jb.I18n = function()
 {
   this.curLangMap = {};
+  this.curPluralMap = {};
   this.formatTmlMap = {};
 };
 
 $jb.I18n.prototype.langsMap = {};
+$jb.I18n.prototype.pluralsMap = {};
   
 
 $jb.I18n.prototype._loadLang = function(url, _result)
@@ -56,6 +58,11 @@ $jb.I18n.prototype._loadLang = function(url, _result)
 
 $jb.I18n.prototype._selectLang = function(name)
 {
+  if(name in this.pluralsMap)
+  {  
+    this.curPluralMap = this.pluralsMap[name];
+  }
+
   if(name in this.langsMap)
   {  
     this.curLangMap = this.langsMap[name];
@@ -73,7 +80,8 @@ $jb.I18n.prototype._translate = function(str)
 
 $jb.I18n.prototype._format = function(str, args)
 {
-  return (this.formatTmlMap[str] || (this.formatTmlMap[str] = new $jb.Template.ASP(str)))._apply(this, args); 
+  return (this.formatTmlMap[str] || (this.formatTmlMap[str] = new $jb.Template.Arguments(str))).
+    _apply(this, args); 
 };
 
 $jb.I18n.prototype._date = function(d)
@@ -92,20 +100,26 @@ $jb.I18n.prototype._dateTime = function(d)
 };
 
 // big thx to y8
-$jb.I18n.prototype._pluralize = function(n, one, few, many, other)
+//$jb.I18n.prototype._pluralize = function(n, one, few, many, other)
+$jb.I18n.prototype._pluralize = function(number, word)
 {
-  var n = this % 10, nn = this % 100;
+  var variants = this.curPluralMap[word];
+  
+  if(variants == null)
+    return word;
+  
+  var n = number % 10, nn = number % 100;
   
   if(n == 0 || (n >= 5 && n <= 9) || (nn >= 11 && nn <= 14))
-    return many;
+    return /*many*/ variants[2];
   
   if(n >= 2 && n <= 4 && (nn < 12 || nn > 14))
-    return few;
+    return /*few*/ variants[1];
   
   if(n == 1 && nn != 11)
-    return one;
+    return /*one*/ variants[0];
   
-  return other;  
+  return /*other*/ variants[3];  
 };
 
 });
