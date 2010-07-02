@@ -80,6 +80,8 @@ $jb.I18n.prototype._translate = function(str)
 
 $jb.I18n.prototype._format = function(str, args)
 {
+  str = this.curLangMap[str] || str;
+  
   return (this.formatTmlMap[str] || (this.formatTmlMap[str] = new $jb.Template.Arguments(str))).
     _apply(this, args); 
 };
