@@ -108,9 +108,9 @@ var TemplateDjangoProto = $jb.Template.Django.prototype;
   {
     var _stringReplacer = function(all, begin, a, end)
     {
-      return begin + '\'' + a._escapeForCString() + '\'//jb\n+' + end;
+      return begin + '\'' + a._escapeForCString() + '\'//jb\n,' + end;
     };
-    var extraConcatOPRE = /\/\/jb\n\+;/g;
+    var extraConcatOPRE = /\/\/jb\n\,;/g;
     
     TemplateDjangoProto._compile = function(text, argNames)
     {
@@ -125,15 +125,15 @@ var TemplateDjangoProto = $jb.Template.Django.prototype;
         "var jbTmlText,\n\
         _jbTmlJoin = Array.prototype.join,\n\
         _echo = function(){ jbTmlText += _jbTmlJoin.call(arguments, ' '); }\n\
-        jbTmlText = " + 
+        jbTmlText = ''.concat(" + 
         (
           ('}}' + text + '{{').
             replace(stringRE, _stringReplacer).  
-            replace(exprRE, '($1)//jb\n+').
-            replace(codeRE, ';$1;jbTmlText+=').
+            replace(exprRE, '($1)//jb\n,').
+            replace(codeRE, ';$1;jbTmlText=jbTmlText.concat(').
             slice(2, -2) + 
           ';return jbTmlText;'
-        ).replace(extraConcatOPRE, ';')
+        ).replace(extraConcatOPRE, ');')
       );
 
       this.text = text;

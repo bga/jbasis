@@ -108,9 +108,9 @@ var TemplateASPProto = $jb.Template.ASP.prototype;
   {
     var _stringReplacer = function(all, a)
     {
-      return '%>\'' + a._escapeForCString() + '\'//jb\n+<%';
+      return '%>\'' + a._escapeForCString() + '\'//jb\n,<%';
     };
-    var extraConcatOPRE = /\/\/jb\n\+;/g;
+    var extraConcatOPRE = /\/\/jb\n\,;/g;
     
     TemplateASPProto._compile = function(text, argNames)
     {
@@ -125,15 +125,15 @@ var TemplateASPProto = $jb.Template.ASP.prototype;
         "var jbTmlText,\n\
         _jbTmlJoin = Array.prototype.join,\n\
         _echo = function(){ jbTmlText += _jbTmlJoin.call(arguments, ' '); }\n\
-        jbTmlText = " + 
+        jbTmlText = ''.concat(" + 
         (
           ('%>' + text + '<%').
             replace(stringRE, _stringReplacer).  
-            replace(exprRE, '($1)//jb\n+').
-            replace(codeRE, ';$1;jbTmlText+='). 
+            replace(exprRE, '($1)//jb\n,').
+            replace(codeRE, ';$1;jbTmlText=jbTmlText.concat('). 
             slice(2, -2) + 
           ';return jbTmlText;'
-        ).replace(extraConcatOPRE, ';')
+        ).replace(extraConcatOPRE, ');')
       );
 
       this.text = text;
