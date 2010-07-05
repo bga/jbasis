@@ -35,6 +35,7 @@
 */
 
 $jb.Loader._scope().
+_require("$jb/$jb.nav.js").
 _require("$jb/$G.String.js").
 //_require("$jb/libconsole.js").
 _willDeclared("$jb/$G.Date.js").
@@ -125,6 +126,9 @@ Date.__resolveDayNames = function(toStringFuncName, names)
     var dll2 = m0._diffLengthLeft(m1);
     var dlr2 = m0._diffLengthRight(m1);
   
+    if(m0.substr(-dlr2, 3) == 'day')
+      dlr2 -= 3;
+    
     m0 = m0.slice(dll2, -dlr2);
     m1 = m1.slice(dll2, -dlr2);
   
@@ -152,6 +156,9 @@ Date.__resolveDayNames = function(toStringFuncName, names)
       dlr2 += len;
       
       var dlr3 = m0._diffLengthRight(m1);
+
+      if(m0.substr(-dlr3, 3) == 'day')
+        dlr3 -= 3;
       
       if(dlr3 == 0)
         return false;
@@ -294,6 +301,11 @@ Date.prototype.dayNames_=
 ];
 */  
 
+Date.dayEnFullNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+Date.dayEnShortNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+Date.monthEnFullNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+Date.monthEnShortNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
 
 Date.prototype._getMaxDateOfMonth = function()
 {
@@ -330,7 +342,7 @@ Date.prototype._getFirstDayOfMonth = function()
   return shift;
 };
 
-$jb._dateStepEq = function(d0, d1, step)
+Date._stepEq = function(d0, d1, step)
 {
   if(d0 == null || d1 == null)
     return true;
@@ -346,21 +358,33 @@ $jb._dateStepEq = function(d0, d1, step)
   
   switch(step)
   {
-    case 6: if(d0.getSeconds() !== d1.getSeconds()) return false;
-    case 5: if(d0.getMinutes() !== d1.getMinutes()) return false;
-    case 4: if(d0.getHours() !== d1.getHours()) return false;
-    case 3: if(d0.getDate() !== d1.getDate()) return false;
-    case 2: if(d0.getMonth() !== d1.getMonth()) return false;
-    case 1: if(d0.getFullYear() !== d1.getFullYear()) return false;
+    case 6: if(d0.getSeconds() != d1.getSeconds()) return false;
+    case 5: if(d0.getMinutes() != d1.getMinutes()) return false;
+    case 4: if(d0.getHours() != d1.getHours()) return false;
+    case 3: if(d0.getDate() != d1.getDate()) return false;
+    case 2: if(d0.getMonth() != d1.getMonth()) return false;
+    case 1: if(d0.getFullYear() != d1.getFullYear()) return false;
   }
   
   return true;
 };
 
-/*
+// http://msdn.microsoft.com/en-us/library/8kb3ddd4.aspx
 (function()
 {
   var cache = {};
+  var begin, end;
+
+  if($jb.nav._ie())
+  {  
+    begin = '[';
+    end = '].join("");'
+  }
+  else
+  {
+    begin = '"".concat(';
+    end = ');'
+  }
   
   Date.prototype._format = function(fmt)
   {
@@ -369,11 +393,75 @@ $jb._dateStepEq = function(d0, d1, step)
       
     var code = fmt;
 
-    code = code.
-      replace(/YYYY/g, '//\nd.getFullYear()+//\n').
-      replace(/YY/g, '//\n(d.getFullYear()%100)+//\n').
-      replace(/MM/g, '//\nd.getMonth()+//\n');
+    code = ('}' + code + '{').
+      replace(/\}([\s\S]*?)\{/g, function(all, a){ return '}"' + a._escapeForCString() + '",//\n{'; }).
+      replace(/\{d\}/g, 'd.getDate(),//\n').
+      replace(/\{dd\}/g, '(100+d.getDate()+"").slice(-2),//\n').
+      replace(/\{ddd\}/g, 'Date.dayEnShortNames[d.getDate()],//\n').
+      replace(/\{dddd\}/g, 'Date.dayEnFullNames[d.getDate()],//\n').
+      
+      replace(/\{f\}/g, '((0.01*d.getMilliseconds())|0),//\n').
+      replace(/\{ff\}/g, '((0.1*d.getMilliseconds())|0),//\n').
+      replace(/\{fff\}/g, 'd.getMilliseconds(),//\n').
+      replace(/\{ffff\}/g, 'd.getMilliseconds(),"0",//\n').
+      replace(/\{fffff\}/g, 'd.getMilliseconds(),"00",//\n').
+      replace(/\{ffffff\}/g, 'd.getMilliseconds(),"000",//\n').
+      
+      replace(/\{F\}/g, '(((0.01*d.getMilliseconds())|0)||""),//\n').
+      replace(/\{FF\}/g, '(((0.1*d.getMilliseconds())|0)||""),//\n').
+      replace(/\{FFF\}/g, '(d.getMilliseconds()||""),//\n').
+      replace(/\{FFFF\}/g, '((a=d.getMilliseconds())?a+"0":""),//\n').
+      replace(/\{FFFFF\}/g, '((a=d.getMilliseconds())?a+"00":""),//\n').
+      replace(/\{FFFFFF\}/g, '((a=d.getMilliseconds())?a+"000":""),//\n').
+      
+      replace(/\{g\}/g, '"A.D",//\n').
+      replace(/\{gg\}/g, '"A.D",//\n').
+      
+      replace(/\{h\}/g, '((d.getHours()%12)||12),//\n').
+      replace(/\{hh\}/g, '(100+((d.getHours()%12)||0) + "").slice(-2),//\n').
+
+      replace(/\{H\}/g, 'd.getHours(),//\n').
+      replace(/\{HH\}/g, '(100+d.getHours() + "").slice(-2),//\n').
+
+      replace(/\{K\}/g, '((a=d.getTimezoneOffset())>0?"+":"-"),(100+Math.abs((a/60)|0)+"").slice(-2),":",(100+a%60+"").slice(-2),//\n').
+      
+      replace(/\{m\}/g, 'd.getMinutes(),//\n').
+      replace(/\{mm\}/g, '(100 + d.getMinutes() + "").slice(-2),//\n').
+
+      replace(/\{M\}/g, '(d.getMonth()+1),//\n').
+      replace(/\{MM\}/g, '(101 + d.getMonth() + "").slice(-2),//\n').
+      replace(/\{MMM\}/g, 'Date.monthEnShortNames[d.getMonth()],//\n').
+      replace(/\{MMMM\}/g, 'Date.monthEnFullNames[d.getMonth()],//\n').
+
+      replace(/\{s\}/g, 'd.getSeconds(),//\n').
+      replace(/\{ss\}/g, '(100+d.getSeconds() + "").slice(-2),//\n').
+
+      replace(/\{t\}/g, '((d.getHours()<12)?"A":"P"),//\n').
+      replace(/\{tt\}/g, '((d.getHours()<12)?"AM":"PM"),//\n').
+
+      replace(/\{y\}/g, 'd.getYear()%10,//\n').
+      replace(/\{yy\}/g, '(100+d.getYear()+"").slice(-2),//\n').
+      replace(/\{yyy\}/g, '((a=d.getFullYear())<1000?(1000+a+"").slice(-3):a),//\n').
+      replace(/\{yyyy\}/g, '(10000+d.getFullYear()+"").slice(-4),//\n').
+      replace(/\{yyyyy\}/g, '(100000+d.getFullYear()+"").slice(-5),//\n').
+      
+      replace(/\{z\}/g, '((a=d.getTimezoneOffset())>0?"+":"-"),((a/60)|0),//\n').
+      replace(/\{zz\}/g, '((a=d.getTimezoneOffset())>0?"+":"-"),(100+Math.abs((a/60)|0)+"").slice(-2),//\n').
+      replace(/\{zzz\}/g, '((a=d.getTimezoneOffset())>0?"+":"-"),(100+Math.abs((a/60)|0)+"").slice(-2),":",(100+a%60+"").slice(-2),//\n').
+      replace(/\/\/\n(\{[\s\S]*?\})/g, function(all, a){ return '"' + a._escapeForCString() + '",//\n'; }).
+      replace(/\"\",\/\/\n/g, '')
+      ;
+      
+    code = code.slice(1, -1);
+
+    if(code.slice(-4) == ',//\n');
+      code = code.slice(0, -4);
+
+    code = 'var a; return ' + begin + code + end;
+    
+    //console.log(code);
+    
+    return (cache[fmt] = new Function('d', code))(this);  
   };
 })();
-*/
 });
