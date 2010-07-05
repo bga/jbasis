@@ -391,77 +391,103 @@ Date._stepEq = function(d0, d1, step)
     if(cache[fmt])
       return cache[fmt](this);
       
-    var code = fmt;
-
-    code = ('}' + code + '{').
-      replace(/\}([\s\S]*?)\{/g, function(all, a){ return '}"' + a._escapeForCString() + '",//\n{'; }).
-      replace(/\{d\}/g, 'd.getDate(),//\n').
-      replace(/\{dd\}/g, '(100+d.getDate()+"").slice(-2),//\n').
-      replace(/\{ddd\}/g, 'Date.dayEnShortNames[d.getDate()],//\n').
-      replace(/\{dddd\}/g, 'Date.dayEnFullNames[d.getDate()],//\n').
-      
-      replace(/\{f\}/g, '((0.01*d.getMilliseconds())|0),//\n').
-      replace(/\{ff\}/g, '((0.1*d.getMilliseconds())|0),//\n').
-      replace(/\{fff\}/g, 'd.getMilliseconds(),//\n').
-      replace(/\{ffff\}/g, 'd.getMilliseconds(),"0",//\n').
-      replace(/\{fffff\}/g, 'd.getMilliseconds(),"00",//\n').
-      replace(/\{ffffff\}/g, 'd.getMilliseconds(),"000",//\n').
-      
-      replace(/\{F\}/g, '(((0.01*d.getMilliseconds())|0)||""),//\n').
-      replace(/\{FF\}/g, '(((0.1*d.getMilliseconds())|0)||""),//\n').
-      replace(/\{FFF\}/g, '(d.getMilliseconds()||""),//\n').
-      replace(/\{FFFF\}/g, '((a=d.getMilliseconds())?a+"0":""),//\n').
-      replace(/\{FFFFF\}/g, '((a=d.getMilliseconds())?a+"00":""),//\n').
-      replace(/\{FFFFFF\}/g, '((a=d.getMilliseconds())?a+"000":""),//\n').
-      
-      replace(/\{g\}/g, '"A.D",//\n').
-      replace(/\{gg\}/g, '"A.D",//\n').
-      
-      replace(/\{h\}/g, '((d.getHours()%12)||12),//\n').
-      replace(/\{hh\}/g, '(100+((d.getHours()%12)||0) + "").slice(-2),//\n').
-
-      replace(/\{H\}/g, 'd.getHours(),//\n').
-      replace(/\{HH\}/g, '(100+d.getHours() + "").slice(-2),//\n').
-
-      replace(/\{K\}/g, '((a=d.getTimezoneOffset())>0?"+":"-"),(100+Math.abs((a/60)|0)+"").slice(-2),":",(100+a%60+"").slice(-2),//\n').
-      
-      replace(/\{m\}/g, 'd.getMinutes(),//\n').
-      replace(/\{mm\}/g, '(100 + d.getMinutes() + "").slice(-2),//\n').
-
-      replace(/\{M\}/g, '(d.getMonth()+1),//\n').
-      replace(/\{MM\}/g, '(101 + d.getMonth() + "").slice(-2),//\n').
-      replace(/\{MMM\}/g, 'Date.monthEnShortNames[d.getMonth()],//\n').
-      replace(/\{MMMM\}/g, 'Date.monthEnFullNames[d.getMonth()],//\n').
-
-      replace(/\{s\}/g, 'd.getSeconds(),//\n').
-      replace(/\{ss\}/g, '(100+d.getSeconds() + "").slice(-2),//\n').
-
-      replace(/\{t\}/g, '((d.getHours()<12)?"A":"P"),//\n').
-      replace(/\{tt\}/g, '((d.getHours()<12)?"AM":"PM"),//\n').
-
-      replace(/\{y\}/g, 'd.getYear()%10,//\n').
-      replace(/\{yy\}/g, '(100+d.getYear()+"").slice(-2),//\n').
-      replace(/\{yyy\}/g, '((a=d.getFullYear())<1000?(1000+a+"").slice(-3):a),//\n').
-      replace(/\{yyyy\}/g, '(10000+d.getFullYear()+"").slice(-4),//\n').
-      replace(/\{yyyyy\}/g, '(100000+d.getFullYear()+"").slice(-5),//\n').
-      
-      replace(/\{z\}/g, '((a=d.getTimezoneOffset())>0?"+":"-"),((a/60)|0),//\n').
-      replace(/\{zz\}/g, '((a=d.getTimezoneOffset())>0?"+":"-"),(100+Math.abs((a/60)|0)+"").slice(-2),//\n').
-      replace(/\{zzz\}/g, '((a=d.getTimezoneOffset())>0?"+":"-"),(100+Math.abs((a/60)|0)+"").slice(-2),":",(100+a%60+"").slice(-2),//\n').
-      replace(/\/\/\n(\{[\s\S]*?\})/g, function(all, a){ return '"' + a._escapeForCString() + '",//\n'; }).
-      replace(/\"\",\/\/\n/g, '')
-      ;
-      
-    code = code.slice(1, -1);
-
-    if(code.slice(-4) == ',//\n');
-      code = code.slice(0, -4);
-
-    code = 'var a; return ' + begin + code + end;
+    var s = '', tag;
+    var op = 0, lb = fmt.indexOf('{');
     
-    //console.log(code);
+    if(lb < 0)
+      return fmt;
     
-    return (cache[fmt] = new Function('d', code))(this);  
+    rb = fmt.indexOf('}', ++lb);
+    
+    if(rb < 0)
+      return fmt;
+    
+    for( ;; )
+    {
+      while((p = fmt.indexOf('{', lb)) > -1 && p < rb)
+        lb = p + 1;
+    
+      if(lb > op)
+        s += '"' + fmt.slice(op, lb - 1)._escapeForCString() + '",';
+      
+      op = rb + 1;
+      
+      switch((tag = fmt.slice(lb, rb)))
+      {
+        case 'd': s += 'd.getDate(),'; break;
+        case 'dd': s += '(100+d.getDate()+"").slice(-2),'; break;
+        case 'ddd': s += 'Date.dayEnShortNames[d.getDate()],'; break;
+        case 'dddd': s += 'Date.dayEnFullNames[d.getDate()],'; break;
+      
+        case 'f': s += '((0.01*d.getMilliseconds())|0),'; break;
+        case 'ff': s += '((0.1*d.getMilliseconds())|0),'; break;
+        case 'fff': s += 'd.getMilliseconds(),'; break;
+        case 'ffff': s += 'd.getMilliseconds(),"0",'; break;
+        case 'fffff': s += 'd.getMilliseconds(),"00",'; break;
+        case 'ffffff': s += 'd.getMilliseconds(),"000",'; break;
+      
+        case 'F': s += '(((0.01*d.getMilliseconds())|0)||""),'; break;
+        case 'FF': s += '(((0.1*d.getMilliseconds())|0)||""),'; break;
+        case 'FFF': s += '(d.getMilliseconds()||""),'; break;
+        case 'FFFF': s += '((a=d.getMilliseconds())?a+"0":""),'; break;
+        case 'FFFFF': s += '((a=d.getMilliseconds())?a+"00":""),'; break;
+        case 'FFFFFF': s += '((a=d.getMilliseconds())?a+"000":""),'; break;
+      
+        case 'g': s += '"A.D",'; break;
+        case 'gg': s += '"A.D",'; break;
+      
+        case 'h': s += '((d.getHours()%12)||12),'; break;
+        case 'hh': s += '(100+((d.getHours()%12)||12)+"").slice(-2),'; break;
+
+        case 'H': s += 'd.getHours(),'; break;
+        case 'HH': s += '(100+d.getHours()+"").slice(-2),'; break;
+
+        case 'K': s += '((a=d.getTimezoneOffset())>0?"+":"-"),(100+Math.abs((a/60)|0)+"").slice(-2),":",(100+a%60+"").slice(-2),'; break;
+      
+        case 'm': s += 'd.getMinutes(),'; break;
+        case 'mm': s += '(100 + d.getMinutes() + "").slice(-2),'; break;
+
+        case 'M': s += '(d.getMonth()+1),'; break;
+        case 'MM': s += '(101 + d.getMonth() + "").slice(-2),'; break;
+        case 'MMM': s += 'Date.monthEnShortNames[d.getMonth()],'; break;
+        case 'MMMM': s += 'Date.monthEnFullNames[d.getMonth()],'; break;
+
+        case 's': s += 'd.getSeconds(),'; break;
+        case 'ss': s += '(100+d.getSeconds() + "").slice(-2),'; break;
+
+        case 't': s += '((d.getHours()<12)?"A":"P"),'; break;
+        case 'tt': s += '((d.getHours()<12)?"AM":"PM"),'; break;
+
+        case 'y': s += 'd.getYear()%10,'; break;
+        case 'yy': s += '(100+d.getYear()+"").slice(-2),'; break;
+        case 'yyy': s += '((a=d.getFullYear())<1000?(1000+a+"").slice(-3):a),'; break;
+        case 'yyyy': s += '(10000+d.getFullYear()+"").slice(-4),'; break;
+        case 'yyyyy': s += '(100000+d.getFullYear()+"").slice(-5),'; break;
+      
+        case 'z': s += '((a=d.getTimezoneOffset())>0?"+":"-"),((a/60)|0),'; break;
+        case 'zz': s += '((a=d.getTimezoneOffset())>0?"+":"-"),(100+Math.abs((a/60)|0)+"").slice(-2),'; break;
+        case 'zzz': s += '((a=d.getTimezoneOffset())>0?"+":"-"),(100+Math.abs((a/60)|0)+"").slice(-2),":",(100+a%60+"").slice(-2),'; break;
+        
+        default: s += '"{' + tag._escapeForCString() + '}",';
+      }
+
+      if((lb = fmt.indexOf('{', rb)) < 0)
+        break;
+      
+      if((rb = fmt.indexOf('}', ++lb)) < 0)
+        break;
+    }
+    
+    if(op < fmt.length)
+      s = s + '"' + fmt.slice(op)._escapeForCString() + '"';
+    else if(s.charAt(s.length - 1) == ',')
+      s = s.slice(0, -1);
+    
+    s = 'var a; return ' + begin + s + end;
+    
+    //console.log(s);
+    
+    return (cache[fmt] = new Function('d', s))(this);  
   };
 })();
 });
