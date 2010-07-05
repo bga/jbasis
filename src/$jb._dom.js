@@ -82,6 +82,14 @@ jqProto._attachEvent = jqProto.bind;
 jqProto._detachEvent = jqProto.unbind;
 jqProto._fireEvent = jqProto.trigger;
 
+jqProto._reattachEvent = function(type, _fn)
+{
+  this._detachEvent.apply(this, arguments);
+  this._attachEvent.apply(this, arguments);
+
+  return this;
+};
+
 jqProto._attr = function(name, value)
 {
   if(value == null)
@@ -204,6 +212,7 @@ jqProto._plug = function(Class)
     if(_data(v, 'jbDomEl') == null)
     {  
       _data(v, 'jbDomEl', new Class(v));
+      _dom(v)._fireEvent('plug');
     }  
   }
   
@@ -216,6 +225,7 @@ jqProto._replug = function(Class)
   while((v = this[++i]))
   {
     _data(v, 'jbDomEl', new Class(v));
+    _dom(v)._fireEvent('plug');
   }
 
   return this;
@@ -227,6 +237,7 @@ jqProto._unplug = function()
   while((v = this[++i]))
   {
     _data(v, 'jbDomEl', null);
+    _dom(v)._fireEvent('unplug');
   }
 
   return this;
