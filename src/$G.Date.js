@@ -385,6 +385,8 @@ Date._stepEq = function(d0, d1, step)
     begin = '"".concat(';
     end = ');'
   }
+
+  var customFormatMap = Date.customFormatMap = {};
   
   Date.prototype._format = function(fmt)
   {
@@ -416,8 +418,8 @@ Date._stepEq = function(d0, d1, step)
       {
         case 'd': s += 'd.getDate(),'; break;
         case 'dd': s += '(100+d.getDate()+"").slice(-2),'; break;
-        case 'ddd': s += 'Date.dayEnShortNames[d.getDate()],'; break;
-        case 'dddd': s += 'Date.dayEnFullNames[d.getDate()],'; break;
+        case 'ddd': s += 'Date.dayEnShortNames[d.getDay()],'; break;
+        case 'dddd': s += 'Date.dayEnFullNames[d.getDay()],'; break;
       
         case 'f': s += '((0.01*d.getMilliseconds())|0),'; break;
         case 'ff': s += '((0.1*d.getMilliseconds())|0),'; break;
@@ -467,8 +469,29 @@ Date._stepEq = function(d0, d1, step)
         case 'z': s += '((a=d.getTimezoneOffset())>0?"+":"-"),((a/60)|0),'; break;
         case 'zz': s += '((a=d.getTimezoneOffset())>0?"+":"-"),(100+Math.abs((a/60)|0)+"").slice(-2),'; break;
         case 'zzz': s += '((a=d.getTimezoneOffset())>0?"+":"-"),(100+Math.abs((a/60)|0)+"").slice(-2),":",(100+a%60+"").slice(-2),'; break;
+
+        case 'r': s += '((Date._stepEq(d, new Date(), 3))?"today":""),'; break;
+        case 'rr': s += '((Date._stepEq(d, (b=new Date()), 2))?(((a=d.getDate()-b.getDate())==0)?"today":((a==1)?"tomorrow":((a==-1)?"yesterday":""))):""),'; break;
+   
+        case 'R': s += '((Date._stepEq(d, new Date(), 3))?$jb.i18n._translate("today"):""),'; break;
+        case 'RR': s += '((Date._stepEq(d, (b=new Date()), 2))?(((a=d.getDate()-b.getDate())==0)?$jb.i18n._translate("today"):((a==1)?$jb.i18n._translate("tomorrow"):((a==-1)?$jb.i18n._translate("yesterday"):""))):""),'; break;
         
-        default: s += '"{' + tag._escapeForCString() + '}",';
+        default: 
+          var i = Math.min(tag.indexOf(' ') >>> 0, tag.indexOf('(') >>> 0); 
+          var prefix = tag.slice(0, i)
+          var customFormat = customFormatMap[prefix];
+          
+          if(customFormat != null)
+          {
+            if(typeof(customFormat) == 'function')
+              s += customFormat(prefix, tag.slice(i + 1)) + ',';
+            else  
+              s += customFormat + ',';
+          }
+          else
+          {  
+            s += '"{' + tag._escapeForCString() + '}",';
+          }  
       }
 
       if((lb = fmt.indexOf('{', rb)) < 0)
@@ -483,11 +506,27 @@ Date._stepEq = function(d0, d1, step)
     else if(s.charAt(s.length - 1) == ',')
       s = s.slice(0, -1);
     
-    s = 'var a; return ' + begin + s + end;
+    s = 'var a,b; return ' + begin + s + end;
     
     //console.log(s);
     
     return (cache[fmt] = new Function('d', s))(this);  
   };
 })();
+
+Date.customFormatMap['choose'] = function(tag, args)
+{ 
+  var a = args.replace('(%', '{', 'g').replace('%)', '}', 'g').split('||');
+  var i = a.length;
+  
+  while(i--)
+    a[i] = 'd._format("' + a[i]._escapeForCString() + '")';
+  
+  var out = '(' + a.join('||') + ')'; 
+  
+  //console.log(out);
+  
+  return out;
+};
+
 });
