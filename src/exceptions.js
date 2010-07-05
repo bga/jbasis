@@ -39,6 +39,13 @@ $jb.Loader._scope().
 _willDeclared("$jb/exceptions.js").
 _completed(function($G, $jb){
 
+/*
+$w.Error.prototype.valueOf = $w.Error.prototype.toString = function()
+{
+  return this.message;
+};
+*/
+
 var $w = $G.$w;
 
 if($w.DOMException == null)
@@ -87,9 +94,17 @@ $w.DOMError = function(msg, code)
   Error.call(this);
   
   this.code = code;
-  this.name = "DOMException";
-  this.constructor = DOMException;
   this.message = msg;
+};
+
+$w.DOMError.prototype = new Error();
+
+$w.DOMError.prototype.constructor = $w.DOMError;
+$w.DOMError.prototype.name = 'DOMException';
+
+$w.DOMError.prototype.valueOf = $w.DOMError.prototype.toString = function()
+{
+  return this.message;
 };
 
 (function()
@@ -115,9 +130,47 @@ $w.DOMError = function(msg, code)
   for(var name in de)
   {
     if(de.hasOwnProperty(name))
-      $G[_convName(name)] = new Function('msg', 'DOMError.call(this, msg, DOMException.' + name + ');');
+    {  
+      var Class = $G[_convName(name)] = new Function('msg', 'DOMError.call(this, msg, DOMException.' + name + ');');
+      Class.prototype = new DOMError();
+      Class.prototype.constructor = Class;
+      Class.prototype.valueOf = Class.prototype.toString = new Function('', 'return "DOMException.' + name + ' " + this.message;'); 
+    }
   }
 })();
+
+if(!('FileError' in $w))
+{
+  $w.FileError = function(code)
+  {
+    this.code = code;
+  };
+  
+  $w.FileError.prototype = new Error();
+  $w.FileError.prototype.constructor = $w.FileError;
+  
+  $w.FileError.NOT_FOUND_ERR	= 8; //	File not found.
+  $w.FileError.NOT_READABLE_ERR	= 24;	// File could not be read.
+  $w.FileError.SECURITY_ERR	= 18;	// The file could not be accessed for security reasons.
+  $w.FileError.ABORT_ERR	= 20;	// The file operation was aborted, probably due to a call to the FileReader abort() method.
+  $w.FileError.ENCODING_ERR	= 26;	// The file data cannot be accurately represented in a data URL.
+}
+
+/*
+if(!('FileException' in $w))
+{
+  $w.FileException = function(code)
+  {
+    this.code = code;
+  };
+  
+  $w.FileException.NOT_FOUND_ERR	= 8; //	File not found.
+  $w.FileException.NOT_READABLE_ERR	= 24;	// File could not be read.
+  $w.FileException.SECURITY_ERR	= 18;	// The file could not be accessed for security reasons.
+  $w.FileException.ABORT_ERR	= 20;	// The file operation was aborted, probably due to a call to the FileReader abort() method.
+  $w.FileException.ENCODING_ERR	= 26;	// The file data cannot be accurately represented in a data URL.
+}
+*/
 
 // use QUOTA_EXCEEDED_ERR instread
 /*
