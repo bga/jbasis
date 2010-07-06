@@ -37,72 +37,62 @@
 $jb.Loader._scope().
 _require("$jb/$G.String.js").
 _willDeclared("$jb/$jb.ValueString.js").
-_completed(function(){
+_completed(function($G, $jb){
 
-$jb.ValueString=function(str,sep,eq)
+$jb.ValueString = function(str, sep, eq)
 {
-  this.str="";// || "";
+  this.str = '';// || "";
   
-  this.sep="";
-  this.eq="";
+  this.sep = '';
+  this.eq = '';
   
-  this.prefix="";
-  this.postfix="";
+  this.prefix = '';
+  this.postfix = '';
   
-  this.isLeftSepInResult=false;
-  this.isRightSepInResult=false;
+  this.isLeftSepInResult = false;
+  this.isRightSepInResult = false;
 
-  if(str!=null)
-    this._fromString(str,sep,eq);
+  if(str != null)
+    this._fromString(str, sep, eq);
 };  
 
-$jb.ValueString.prototype.__seekValue=function(name)
+$jb.ValueString.prototype.__seekValue = function(name)
 {
-  var searchStr=this.sep+name+this.eq;
-  var i=this.str.indexOf(searchStr);
-  
-  return i;
+  return this.str.indexOf(this.sep + name + this.eq);
 };
 
-$jb.ValueString.prototype._hasValue=function(name)
+$jb.ValueString.prototype._hasValue = function(name)
 {
-  var i=this.__seekValue(name);
-  
-  return i !== -1;
+  return this.__seekValue(name) > -1;
 };
-$jb.ValueString.prototype._getValue=function(name)
+$jb.ValueString.prototype._getValue = function(name)
 {
-  var i=this.__seekValue(name);
+  var i = this.__seekValue(name);
   
-  if(i === -1)
+  if(i < 0)
     return null;
   
-  i+=this.sep.length;
-  i=this.str.indexOf(this.eq,i); 
-  i+=this.eq.length;
+  i = this.str.indexOf(this.eq, i + this.sep.length) + this.eq.length; 
   
-  var j=this.str.indexOf(this.sep,i);
-  
-  return this.str.substring(i,j);
+  return this.str.substring(i, this.str.indexOf(this.sep, i));
 };
+
 /*
   actionFlag values
     true = only replace
     false = only add
     null(default value) = replace or add
 */
-$jb.ValueString.prototype._setValue=function(name,value,actionFlag)
+$jb.ValueString.prototype._setValue = function(name, value, actionFlag)
 {
-  this.str=Object(this.str);
+  var i = this.__seekValue(name);
   
-  var i=this.__seekValue(name);
-  
-  if(i === -1)
+  if(i < 0)
   {
     if(actionFlag === true)
       return false;
       
-    this.str+=name+this.eq+value+this.sep;
+    this.str += name + this.eq + value + this.sep;
     
     return true;
   }
@@ -110,103 +100,103 @@ $jb.ValueString.prototype._setValue=function(name,value,actionFlag)
   if(actionFlag === false)
     return false;
 
-  i+=this.sep.length;
-  i=this.str.indexOf(this.eq,i); 
-  i+=this.eq.length;
-  var j=this.str.indexOf(this.sep,i);
+  var str = this.str;
   
-  this.str=this.str.substring(0,i)+value+this.str.substring(j);
+  i = str.indexOf(this.eq, i + this.sep.length) + this.eq.length; 
   
-  return true;
-};
-$jb.ValueString.prototype._deleteValue=function(name)
-{
-  var i=this.__seekValue(name);
-  
-  if(i === -1)
-  {
-    return false;
-  }
-  
-  var j=i;
-  j+=this.sep.length;
-  j=this.str.indexOf(this.eq,j); 
-  j+=this.eq.length;
-  var k=this.str.indexOf(this.sep,j);
-  
-  this.str=this.str.substring(0,i)+this.str.substring(k);
+  this.str = str.substring(0, i) + value + str.substring(str.indexOf(this.sep, i));
   
   return true;
 };
 
-$jb.ValueString.prototype._get=function()
+$jb.ValueString.prototype._deleteValue = function(name)
 {
-  var t=this.prefix;
+  var i = this.__seekValue(name);
+  
+  if(i < 0)
+    return false;
+  
+  var str = this.str;
+  
+  this.str = str.substring(0, i) + 
+    str.substring(
+      str.indexOf(
+        this.sep, 
+        str.indexOf(this.eq, i + this.sep.length) + this.eq.length
+      )
+    );
+  
+  return true;
+};
+
+$jb.ValueString.prototype._get = function()
+{
+  var t = this.prefix;
   
   if(this.isLeftSepInResult === true && this.isRightSepInResult === true)
   {
-    t+=this.str;
+    t += this.str;
   }
   else
   {
-    t+=this.str.substring
-    (
+    t += this.str.slice(
       (this.isLeftSepInResult === false) ? this.sep.length : 0,
-      (this.isRightSepInResult === false) ? this.str.length-this.sep.length : this.str.length
+      (this.isRightSepInResult === false) ? -this.sep.length : null
     );
   }  
 
-  return t+=this.postfix;
+  return t + this.postfix;
 };
 
-$jb.ValueString.prototype._makeValid=function()
+$jb.ValueString.prototype._makeValid = function()
 {
-  this.str=this.str._requireLeft(this.sep)._requireRight(this.sep);
+  this.str = this.str._requireLeft(this.sep)._requireRight(this.sep);
   
   return this;
 };
 
-$jb.ValueString.prototype._saveBoundsState=function()
+$jb.ValueString.prototype._saveBoundsState = function()
 {
-  var strLen=this.str.length;
-  var sepLen=this.sep.length;
+  var str = this.str, strLen = str.length;
+  var sep = this.sep, sepLen = sep.length;
   
-  if(strLen<sepLen)
+  if(strLen < sepLen)
   {
-    this.isLeftSepInResult=this.isRightSepInResult=false;
+    this.isLeftSepInResult = this.isRightSepInResult = false;
   }
   else
   {
-    this.isLeftSepInResult=this.str._hasSub(this.sep,0);
-    this.isRightSepInResult= (this.isLeftSepInResult === true) ? 
-    strLen>=2*sepLen && this.str._hasSub(this.sep,-1) : this.str._hasSub(this.sep,-1);
+    this.isLeftSepInResult = str.slice(0, sepLen) == sep;
+    this.isRightSepInResult = (this.isLeftSepInResult && strLen >= 2*sepLen) && str.slice(-sepLen) == sep;
   }
   
   return this;
-}
+};
 
-$jb.ValueString.prototype._fromUrlName=function(url,sep,eq)
+/*
+$jb.ValueString.prototype._fromUrlName = function(url, sep, eq)
 {
-  if(sep==null)
-    sep=this.sep || "&";
-  if(eq==null)
-    eq=this.eq || "=";
+  if(sep == null)
+    sep = this.sep || '&';
   
-  this.sep=sep;
-  this.eq=eq;
+  if(eq == null)
+    eq = this.eq || '=';
+  
+  this.sep = sep;
+  this.eq = eq;
 
-  var i=url._urlNameEndIndex();
-  var j=url.indexOf(sep,url._urlNameIndex()+1);
-  var k=url.lastIndexOf(sep,i);
+  var i = url._urlNameEndIndex();
+  var j = url.indexOf(sep, url._urlNameIndex() + 1);
+  var k = url.lastIndexOf(sep, i);
   
-  if(j==-1 || j>k)
-    j=k=i;
+  if(j < 0 || j > k)
+    j = k = i;
   else
-    k+=sep.length;
+    k += sep.length;
   
-  this.str=url.substring(j,k);
-  this.prefix=url.substr(0,j);
-  this.postfix=url.substring(k);
+  this.str = url.substring(j, k);
+  this.prefix = url.substr(0, j);
+  this.postfix = url.substring(k);
   
   this._saveBoundsState();
   this._makeValid();
@@ -214,18 +204,19 @@ $jb.ValueString.prototype._fromUrlName=function(url,sep,eq)
   return this;
 };
 
-$jb.ValueString.prototype._fromClassName=function(className,sep,eq)
+$jb.ValueString.prototype._fromClassName = function(className, sep, eq)
 {
-  if(sep==null)
-    sep=this.sep || " ";
-  if(eq==null)
-    eq=this.eq || "_";
+  if(sep == null)
+    sep = this.sep || ' ';
   
-  this.sep=sep;
-  this.eq=eq;
-  this.prefix="";
-  this.str=className;
-  this.postfix="";
+  if(eq == null)
+    eq = this.eq || '_';
+  
+  this.sep = sep;
+  this.eq = eq;
+  this.prefix = '';
+  this.str = className;
+  this.postfix = '';
   
   this._saveBoundsState();
   this._makeValid();
@@ -233,78 +224,81 @@ $jb.ValueString.prototype._fromClassName=function(className,sep,eq)
   return this;
 };
 
-$jb.ValueString.prototype._fromUrlHash=function(url,sep,eq)
+$jb.ValueString.prototype._fromUrlHash = function(url, sep, eq)
 {
-  if(sep==null)
-    sep=this.sep || "&";
-  if(eq==null)
-    eq=this.eq || "=";
+  if(sep == null)
+    sep = this.sep || '&';
   
-  var i=url._urlHashIndex();
+  if(eq == null)
+    eq = this.eq || '=';
   
-  this.prefix=url.substring(0,i);
+  var i = url._urlHashIndex();
+  
+  this.prefix = url.substring(0, i);
 
-  if(url.charAt(i)=="#")
+  if(url.charAt(i) == '#')
   {
     ++i;
-    this.prefix+="#";
+    this.prefix += '#';
   }
   
-  this.sep=sep;
-  this.eq=eq;
-  this.postfix="";
-  this.str=url.substring(i);
+  this.sep = sep;
+  this.eq = eq;
+  this.postfix = '';
+  this.str = url.substring(i);
   
   this._saveBoundsState();
   this._makeValid();
   
   return this;
 };
-
-$jb.ValueString.prototype._fromUrlQuery=function(url,sep,eq)
+$jb.ValueString.prototype._fromUrlQuery = function(url, sep, eq)
 {
-  if(sep==null)
-    sep="&";
-  if(eq==null)
-    eq="=";
+  if(sep == null)
+    sep = '&';
   
-  var q="";    
-  var i=url._urlQueryIndex();
+  if(eq == null)
+    eq = '=';
   
-  if(url.charAt(i)=="?")
+  var q = '';    
+  var i = url._urlQueryIndex();
+  
+  if(url.charAt(i) == '?')
     ++i;
   else
-    q="?";
+    q = '?';
   
-  var j=url._urlQueryEndIndex();
+  var j = url._urlQueryEndIndex();
   
-  this.sep=sep;
-  this.eq=eq;
-  this.prefix=url.substring(0,i)+q;
-  this.str=url.substring(i,j);
-  this.postfix=url.substring(j);
+  this.sep = sep;
+  this.eq = eq;
+  this.prefix = url.substring(0, i) + q;
+  this.str = url.substring(i, j);
+  this.postfix = url.substring(j);
   
   this._saveBoundsState();
   this._makeValid();
   
   return this;
 };
+*/
 
-$jb.ValueString.prototype._fromString=function(str,sep,eq)
+$jb.ValueString.prototype._fromString = function(str, sep, eq)
 {
-  if(sep==null)
-    sep="&";
-  if(eq==null)
-    eq="=";
+  if(sep == null)
+    sep = '&';
   
-  var i=str._indexOf(sep) || 0;
-  var j=str._lastIndexOf(sep) || str.length;
+  if(eq == null)
+    eq = '=';
   
-  this.sep=sep;
-  this.eq=eq;
-  this.prefix=str.substring(0,i);
-  this.str=str.substring(i,j);
-  this.postfix=str.substring(j);
+  var i = ~(~str.indexOf(sep) || -1);
+  var j = str.lastIndexOf(sep) >>> 0;
+  
+  this.sep = sep;
+  this.eq = eq;
+  this.prefix = str.slice(0, i);
+  this.str = str.slice(i, j + 1);
+  this.postfix = str.slice(j + 1);
   
   this._saveBoundsState();
   this._makeValid();
