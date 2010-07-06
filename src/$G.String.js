@@ -524,98 +524,60 @@ String.prototype._toInt = function()
   };
 })();
 
-String.prototype._diffLengthLeft=null;
-String.prototype._diffLengthRight=null;
+String.prototype._diffLengthLeft = function(s2)
+{
+  var i = -1,
+    minLength = (this.length < s2.length) ? this.length : s2.length;
+  
+  while(++i < minLength && this.charAt(i) == s2.charAt(i))
+    ;
+  
+  return i;
+};
 
-if($jb.nav.ff_)
+String.prototype._diffLengthRight = function(s2)
 {
-  String.prototype._diffLengthLeft = function(s2)
+  var tLen = this.length, sLen = s2.length;
+  var i = tLen, j = sLen;
+  
+  if(tLen < sLen)
   {
-    var i = -1,
-      minLength = (this.length < s2.length) ? this.length : s2.length;
-    
-    while(++i < minLength && this.charAt(i) === s2.charAt(i))
+    while(i && this.charAt(--i) == s2.charAt(--j))
       ;
-    
-    return i;
-  };
-  String.prototype._diffLengthRight=function(s2)
+      
+    return tLen - i - 1;
+  }
+  else
   {
-    var tLen = this.length,sLen=s2.length;
-    var i=tLen-1,j=sLen-1;
-    
-    if(tLen<sLen)
-    {
-      while(i >= 0 && this.charAt(i)==s2.charAt(j))
-        --i,--j;
+    while(j && this.charAt(--i) == s2.charAt(--j))
+      ;
       
-      return tLen-i-1;
-    }
-    else
-    {
-      while(i>=0 && this.charAt(i)==s2.charAt(j))
-        --i,--j;
-      
-      return sLen-j-1;
-    }
-  };
-}
-else
-{
-  String.prototype._diffLengthLeft=function(s2)
-  {
-    var i=0;
-    var minLength=this.length<s2.length?this.length:s2.length;
-    
-    while(i<minLength && this.charCodeAt(i)==s2.charCodeAt(i))
-      ++i;
-    
-    return i;
-  };
-  String.prototype._diffLengthRight=function(s2)
-  {
-    var tLen=this.length,sLen=s2.length;
-    var i=tLen-1,j=sLen-1;
-    
-    if(tLen<sLen)
-    {
-      while(i>=0 && this.charCodeAt(i)==s2.charCodeAt(j))
-        --i,--j;
-      
-      return tLen-i-1;
-    }
-    else
-    {
-      while(i>=0 && this.charCodeAt(i)==s2.charCodeAt(j))
-        --i,--j;
-      
-      return sLen-j-1;
-    }
-  };
-}
-String.prototype._diffLeft=function(s2)
-{
-  var i=this._diffLengthLeft(s2);
-  
-  return i<this.length?this.substring(i):"";
+    return sLen - j - 1;
+  }
 };
-String.prototype._diffRight=function(s2)
+String.prototype._diffLeft = function(s2)
 {
-  var i=this._diffLengthRight(s2);
+  var i = this._diffLengthLeft(s2);
   
-  return i<this.length?this.substr(0,this.length-i):"";
+  return (i < this.length) ? this.substring(i) : '';
 };
-String.prototype._diffAbsLeft=function(s2)
+String.prototype._diffRight = function(s2)
 {
-  var i=this._diffLengthLeft(s2);
+  var i = this._diffLengthRight(s2);
   
-  return i<this.length?this.substring(i):s2.substring(i);
+  return (i < this.length) ? this.substr(0, this.length - i) : '';
+};
+String.prototype._diffAbsLeft = function(s2)
+{
+  var i = this._diffLengthLeft(s2);
+  
+  return (i < this.length) ? this.substring(i) : s2.substring(i);
 };
 String.prototype._diffAbsRight=function(s2)
 {
-  var i=this._diffLengthRight(s2);
+  var i = this._diffLengthRight(s2);
   
-  return i<this.length?this.substr(0,this.length-i):s2.substr(0,s2.length-i);
+  return (i < this.length) ? this.slice(0, -i) : s2.substr(0, -i);
 };
 
 String.prototype._deepScanForward=function(strOpen,strClose,lvl,i,deep)
@@ -734,7 +696,7 @@ String.prototype._deepScanBackward=function(strOpen,strClose,lvl,i,deep)
   re = /\b./g
   ;
 
-  String.prototype._capitalize= function(n)
+  String.prototype._capitalize = function(n)
   {
     var _replacer = (n > 0) ? _replacerMulti : _replacerSingle;
     
