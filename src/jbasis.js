@@ -61,7 +61,7 @@ var $jb = $G.$jb,
   ;
 
 /** @var ref to application global namespace */ 
-$G.$A = {};
+//var $A = $G.$A = {};
 
 /** @var ref to current window */ 
 var $w = $G.$w = window;
@@ -310,7 +310,7 @@ Loader._findResourceLoadingUrls = function(resouce)
 
 Loader.extToMimeMap =
 {
-  '.js': 'text/javascript',
+  '.js': 'text/javascript'
 };
 
 
@@ -561,14 +561,14 @@ Loader._status = function()
     v = sm[i];
     
     s += '{'
-    for(j in (m = v.requireMap_))
+    for(j in (m = v.requireMap))
     {  
       if(m.hasOwnProperty(j))
         s += j + ', ';
     }
     s += '} -> {';
     
-    for(j in (m = v.willDeclareMap_))
+    for(j in (m = v.willDeclareMap))
     {
       if(m.hasOwnProperty(j))
         s += j + ', ';
@@ -585,21 +585,30 @@ Loader._status = function()
   return t;
 };
 
+(function()
+{
+  var $A = {};
+  
+  Loader._callCompletedFn = function(scope)
+  {
+    scope._completed($G, $jb, $A);
+  };
+})();  
 
 /** @class represent scope interface */
 Loader.Scope = function()
 {
   /** @var map "require url" -> declared state (true if declared else false) */
-  this.requireMap_ = {};
+  this.requireMap = {};
   
   /** @var count of url not declared already but requring by this scope */
-  this.pendingUrlCount_ = 0;
+  this.pendingUrlCount = 0;
   
   /** @var map "will declare url"->true */
-  this.willDeclareMap_ = {};
+  this.willDeclareMap = {};
   
   /** @var callback that will be fired when all required urls declared */
-  this.__completed;
+  this._completed;
 
   /** @var self id in Loader_scopes */
   this.selfId_ = Loader_scopes.nextId;
@@ -626,10 +635,10 @@ ScopeProto._require = function(url, nonCompatable, mime)
   if(Loader.__requireUrl(url, nonCompatable) == true)
     return this;
   
-  if(!(url in this.requireMap_))
+  if(!(url in this.requireMap))
   {
-    this.requireMap_[url] = false;
-    ++this.pendingUrlCount_;
+    this.requireMap[url] = false;
+    ++this.pendingUrlCount;
   }
   
   return this;
@@ -658,7 +667,7 @@ ScopeProto._willDeclared = function(url)
 {
   url = _fullUrl(_metaUrl(url));
 
-  this.willDeclareMap_[url] = true;
+  this.willDeclareMap[url] = true;
   
   return this;
 };
@@ -669,7 +678,7 @@ ScopeProto._willDeclared = function(url)
 ScopeProto._declareUrl = function()
 {
   var _declareUrl = Loader._declareUrl,
-    obj = this.willDeclareMap_;
+    obj = this.willDeclareMap;
   
   for(var i in obj)
   {
@@ -685,13 +694,13 @@ ScopeProto._declareUrl = function()
 */ 
 ScopeProto._completed = function(_func)
 {
-  this.__completed = _func;
+  this._completed = _func;
   
-  if(this.pendingUrlCount_ > 0)
+  if(this.pendingUrlCount > 0)
     return this;
   
-  if(this.__completed != null)
-    this.__completed($G, $jb);
+  if(this._completed != null)
+    Loader._callCompletedFn(this);
   
   delete Loader_scopes.els[this.selfId_];
   
@@ -707,18 +716,18 @@ ScopeProto._completed = function(_func)
 */ 
 ScopeProto.__resourceDeclared = function(url)
 {
-  if(this.requireMap_[url] != false)
+  if(this.requireMap[url] != false)
     return 0;
   
-  this.requireMap_[url] = true;
-  --this.pendingUrlCount_;
+  this.requireMap[url] = true;
+  --this.pendingUrlCount;
   
-  if(this.pendingUrlCount_ > 0)
+  if(this.pendingUrlCount > 0)
     return 0;
   
   // TODO call via setTimeout and stack system
-  if(this.__completed != null)
-    this.__completed($G, $jb);
+  if(this._completed != null)
+    Loader._callCompletedFn(this);
   
   delete Loader_scopes.els[this.selfId_];
   
