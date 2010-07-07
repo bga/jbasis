@@ -552,4 +552,60 @@ $jb._fEval = function(str)
   };
 };
 
+Function.prototype._makeLikeNative = function()
+{
+  if(Object.defineProperty)
+  {
+    var blackLabelProp = 
+    {
+      enumerable: false,
+      configurable: false,
+      writable: false,
+      value: true 
+    };
+
+    Function.prototype._makeLikeNative = function()
+    {
+      Object.defineProperty(this, 'isSourceHided', blackLabelProp);
+    };
+
+    var _oldFnToString = Function.prototype.toString;
+    
+    Object.defineProperty(Function.prototype, 'toString',
+      {
+        configurable: false,
+        writable: false,
+        value: function()
+        {
+          if(this.isSourceHided === true)
+            return 'function () { [native code] }';
+            
+          return _oldFnToString.call(this);  
+        }
+      }
+    );
+
+    Function.prototype.toString._makeLikeNative();
+  }
+  else
+  {
+    var _hider = function()
+    {
+      return 'function () { [native code] }';
+    }; 
+
+    _hider.toString = _hider;
+
+    Function.prototype._makeLikeNative = function()
+    {
+      // also dont remember that IE do not enum valueOf and toString properties :P
+      this.toString = _hider;
+    };
+  }
+  
+  Function.prototype._makeLikeNative._makeLikeNative();
+  
+  this._makeLikeNative();
+};
+
 });
