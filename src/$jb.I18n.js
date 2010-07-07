@@ -75,7 +75,20 @@ $jb.I18n.prototype._selectLang = function(name)
 
 $jb.I18n.prototype._translate = function(str)
 {
-  return this.curLangMap[str] || str; 
+  var tran = this.curLangMap[str];
+  
+  if(tran)
+    return tran;
+    
+  var firstLetter, firstLowerLetter;
+  
+  if((firstLowerLetter = (firstLetter = str.charAt(0)).toLowerCase()) == firstLetter)
+    return str;
+    
+  if((tran = this.curLangMap[firstLowerLetter + str.slice(1)]) == null)
+    return str;
+  
+  return tran.charAt(0).toUpperCase() + tran.slice(1);
 };
 
 $jb.I18n.prototype._format = function(str, args)
@@ -103,7 +116,7 @@ $jb.I18n.prototype._dateTime = function(d)
 
 // big thx to y8
 //$jb.I18n.prototype._pluralize = function(n, one, few, many, other)
-$jb.I18n.prototype._pluralize = function(number, word)
+$jb.I18n.prototype._pluralize = function(word, number)
 {
   var variants = this.curPluralMap[word];
   
@@ -122,6 +135,26 @@ $jb.I18n.prototype._pluralize = function(number, word)
     return /*one*/ variants[0];
   
   return /*other*/ variants[3];  
+};
+
+$jb.I18n.prototype._translateAndPluralize = function(str, number)
+{
+  var tran = this.curLangMap[str];
+  
+  if(tran)
+    return this._pluralize(tran, number);
+    
+  var firstLetter, firstLowerLetter;
+  
+  if((firstLowerLetter = (firstLetter = str.charAt(0)).toLowerCase()) == firstLetter)
+    return this._pluralize(str, number);
+    
+  if((tran = this.curLangMap[firstLowerLetter + str.slice(1)]) == null)
+    return this._pluralize(str, number);
+  
+  tran = this._pluralize(tran, number);
+  
+  return tran.charAt(0).toUpperCase() + tran.slice(1);
 };
 
 });
