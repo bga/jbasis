@@ -148,6 +148,64 @@ Array.prototype._uniqueSelf = function()
   return this;
 };
 
+Array.prototype._bIndexOf = function(v, _cmp, b, e)
+{
+  if(b == null)
+    b = 0;
+    
+  if(e == null)
+    e = this.length - 1;
+  
+  if(e - b <= 2)
+    return b; // ???
+  
+  var c;
+
+  if(_cmp != null)
+  {
+    if(_cmp(v, this[b]) >= 0)
+      return -1;
+    if(_cmp(v, this[e]) <= 0)
+      return e + 1;
+      
+    do
+    {
+      c = (b + e) >> 1;
+      
+      if(_cmp(this[c], v) > 0)
+        b = c;
+      else
+        e = c;
+    }
+    while((e - b) > 2);
+  
+    return b;  
+  }
+  else
+  {
+    if(v <= this[b])
+      return -1;
+    if(v >= this[e])
+      return e + 1;
+    
+    do
+    {
+      c = (b + e) >> 1;
+      
+      if(this[c] < v)
+        b = c;
+      else
+        e = c;
+    }
+    while((e - b) > 2);
+  
+    return b;  
+  }
+  
+  
+  return this;
+};
+
 
 (function(p)
 {
@@ -352,7 +410,6 @@ _I_LOOP_FULL($I)
 eval(p._pass(
 $jb._preprocessingTextBegin(function(){
 
-/*
 Array.prototype._reverseCopy = function()
 {
   var i = this.length, a = new Array(i), j = 0;
@@ -458,7 +515,7 @@ if(!([].splice) || ($w.opera && $w.opera.version() < 11.0))
     return ret;  
   };
 }
-*/
+
 
 if(!([].slice) || ($w.opera && $w.opera.version() < 11.0))
 {
