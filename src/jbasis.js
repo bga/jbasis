@@ -560,21 +560,21 @@ Loader._status = function()
     
     v = sm[i];
     
-    s += '{'
+    s += '{\n'
     for(j in (m = v.requireMap))
     {  
       if(m.hasOwnProperty(j))
-        s += j + ', ';
+        s += '  ' + j + ',\n';
     }
-    s += '} -> {';
+    s += '} -> {\n';
     
     for(j in (m = v.willDeclareMap))
     {
       if(m.hasOwnProperty(j))
-        s += j + ', ';
+        s += '  ' + j + ',\n';
     }
     
-    s += '}\n';
+    s += '}\n\n';
   }
   
   if(s != '')
