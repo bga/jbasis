@@ -36,8 +36,30 @@
 
 $jb.Loader._scope().
 //_require("$jb/$jb.EventTarget.js").
+_require("$jb/$jb.nav.js").
 _willDeclared("$jb/exceptions.js").
 _completed(function($G, $jb){
+
+if($jb.nav._webkit())
+{
+  (function($G)
+  {
+    var _wrap = function(Class)
+    {
+      var _toString = Class.prototype.toString; 
+      
+      Class.prototype.toString = function()
+      {
+        if(this.stack)
+          console.error('stack trace\n' + this.stack);
+
+        return _toString.call(this);
+      };
+    };
+
+    _wrap($G.Error);
+  })(window);
+}
 
 /*
 $w.Error.prototype.valueOf = $w.Error.prototype.toString = function()
@@ -86,6 +108,8 @@ DOMException.NETWORK_ERR = 19;
 DOMException.ABORT_ERR = 20;
 DOMException.URL_MISMATCH_ERR = 21;
 DOMException.QUOTA_EXCEEDED_ERR = 22;
+DOMException.NOT_READABLE_ERR	= 24;	// File could not be read.
+DOMException.ENCODING_ERR	= 26;	// The file data cannot be accurately represented in a data URL.
 DOMException.PARSE_ERR = 81;
 DOMException.SERIALIZE_ERR = 82;
 
@@ -101,11 +125,6 @@ $w.DOMError.prototype = new Error();
 
 $w.DOMError.prototype.constructor = $w.DOMError;
 $w.DOMError.prototype.name = 'DOMException';
-
-$w.DOMError.prototype.valueOf = $w.DOMError.prototype.toString = function()
-{
-  return this.message;
-};
 
 (function()
 {
@@ -131,10 +150,16 @@ $w.DOMError.prototype.valueOf = $w.DOMError.prototype.toString = function()
   {
     if(de.hasOwnProperty(name))
     {  
-      var Class = $G[_convName(name)] = new Function('msg', 'DOMError.call(this, msg, DOMException.' + name + ');');
+      var convName = _convName(name);
+      
+      if(convName in $G)
+        continue;
+      
+      var Class = $G[convName] = new Function('msg', 'DOMError.call(this, msg, DOMException.' + name + ');');
+      
       Class.prototype = new DOMError();
       Class.prototype.constructor = Class;
-      Class.prototype.valueOf = Class.prototype.toString = new Function('', 'return "DOMException.' + name + ' " + this.message;'); 
+      Class.prototype.name = convName;
     }
   }
 })();
@@ -144,10 +169,12 @@ if(!('FileError' in $w))
   $w.FileError = function(code)
   {
     this.code = code;
+    this.message = '' + code;
   };
   
   $w.FileError.prototype = new Error();
   $w.FileError.prototype.constructor = $w.FileError;
+  $w.FileError.prototype.name = 'FileError';
   
   $w.FileError.NOT_FOUND_ERR	= 8; //	File not found.
   $w.FileError.NOT_READABLE_ERR	= 24;	// File could not be read.
