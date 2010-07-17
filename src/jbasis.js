@@ -212,55 +212,64 @@ var _fullUrl;
 */
 Loader.__set_DOMNodeLoaded = function(v, _fn)
 {
-  v.onload = function()
+  if('onreadystatechange' in v)
   {
-    //alert('onload');
-    v.onreadystatechange = v.onerror = null;
-    
-    setTimeout
-    (
-      function()
-      {
-        v.onload = null;
-        _fn(v, true);
-      },
-      0
-    );
-  };
-  v.onerror = function()
-  {
-    //alert('onerror');
-    v.onreadystatechange = v.onload = null;
-    
-    setTimeout
-    (
-      function()
-      {
-        v.onerror = null;
-        _fn(v, false);
-      },
-      0
-    );
-  };
-  
-  v.onreadystatechange = function()
-  {
-    //alert(this.readyState);
-    if(v.readyState != "loaded" && v.readyState != "complete")
-      return;
+    v.onreadystatechange = function()
+    {
+      //alert(this.readyState);
+      if(v.readyState != "loaded" && v.readyState != "complete")
+        return;
 
-    v.onload = v.onerror = null;
-    
-    setTimeout
-    (
-      function()
-      {
-        v.onreadystatechange = null;
-        _fn(v, null);
-      },
-      0
-    );
-  };
+      v.onload = v.onerror = null;
+      
+      setTimeout
+      (
+        function()
+        {
+          v.onreadystatechange = null;
+          _fn(v, null);
+        },
+        0
+      );
+    };
+  }  
+  else if('onload' in v)
+  {
+    v.onload = function()
+    {
+      //alert('onload');
+      v.onreadystatechange = v.onerror = null;
+      
+      setTimeout
+      (
+        function()
+        {
+          v.onload = null;
+          _fn(v, true);
+        },
+        0
+      );
+    };
+  }  
+  
+  if('onerror' in v)
+  {
+    v.onerror = function()
+    {
+      //alert('onerror');
+      v.onreadystatechange = v.onload = null;
+      
+      setTimeout
+      (
+        function()
+        {
+          v.onerror = null;
+          _fn(v, false);
+        },
+        0
+      );
+    };
+  }  
 };
 
 (function()
