@@ -77,26 +77,7 @@ ImageResourceProto._findLoadingUrls = function(_callback)
 // http://lucassmith.name/2008/11/is-my-image-loaded.html
 ImageResourceProto._load = (function()
 {
-  var prop;
-  
-  (function()
-  {
-    var img = new Image();
-    
-    try
-    {
-      img.src = "dddwndkj://jh.knkjnkjwn/jbbj.nnj";
-    }
-    catch(err)
-    {
-    
-    };
-    
-    if(typeof(img.naturalWidth) != 'undefined')
-      prop = 'naturalWidth';
-    else
-      prop = 'width';
-  })();  
+  var prop = ('naturalWidth' in new Image()) ? 'naturalWidth' : 'width';
   
   return function(mime, url, _result)
   {
