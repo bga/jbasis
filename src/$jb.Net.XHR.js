@@ -124,6 +124,10 @@ XHRProto.__stateChangedReal = function()
   }
   else
   {
+    // http://dev.jquery.com/ticket/1450
+    if(status == 1223)
+      status = 204;
+      
     if(this._acceptStatus != null && !this._acceptStatus(status))
       this._fireEvent('error', this, [this, new InvalidStateError()]);
     else
@@ -146,11 +150,12 @@ XHRProto.__setRequestHeaders = function()
 {
   var i;
   var hm = this.requestHeaderMap;
+  var xhr_ = this.xhr_;
   
   for(i in hm)
   {
     if(hm.hasOwnProperty(i))
-      this.xhr_.setRequestHeader(i, hm[i]);
+      xhr.setRequestHeader(i, hm[i]);
   }
 };
 
