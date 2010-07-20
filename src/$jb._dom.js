@@ -64,6 +64,8 @@ var _dom = $jb._dom = function(expr, ctx)
   return _jq(expr, ctx);
 };
 
+_dom.prototype = jqProto;
+
 for(var i in jqProto)
 {
   if(
@@ -88,6 +90,19 @@ jqProto._reattachEvent = function(type, _fn)
   this._attachEvent.apply(this, arguments);
 
   return this;
+};
+
+jqProto._hasEvent =  function(type, _fn)
+{
+  var data, eventsMap, events;
+  
+  if(!((data = this._data()) && (eventsMap = data.events) && (events = eventsMap[type])))
+    return false;
+    
+  var event, i = -1; while((event = events[++i]) && event.handler !== _fn)
+    ;
+    
+  return !!event;  
 };
 
 jqProto._attr = function(name, value)
