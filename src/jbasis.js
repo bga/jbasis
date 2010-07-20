@@ -287,10 +287,15 @@ Loader.__set_DOMNodeLoaded = function(v, _fn)
         return false;"
   }
   
-  if($w.opera)
+  if('text' in s)
   {
     checkerBody +=
       "if(v.text != null) return true;";
+  }
+  if('textContent' in s)
+  {
+    checkerBody +=
+      "if(v.textContent != null) return true;";
   }
   
   checkerBody += "return null;";
