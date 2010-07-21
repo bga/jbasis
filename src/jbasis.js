@@ -290,12 +290,12 @@ Loader.__set_DOMNodeLoaded = function(v, _fn)
   if('text' in s)
   {
     checkerBody +=
-      "if(v.text != null) return true;";
+      "if(v.text > '') return true;";
   }
   if('textContent' in s)
   {
     checkerBody +=
-      "if(v.textContent != null) return true;";
+      "if(v.textContent > '') return true;";
   }
   
   checkerBody += "return null;";
