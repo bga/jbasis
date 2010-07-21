@@ -42,11 +42,9 @@ _completed(function($G, $jb){
 $jb.FunctionQueue = function()
 {
   this.queue_ = [];
-  
-  return this;
 };  
 
-/* @alias */
+/** @alias */
 var FunctionQueueProto = $jb.FunctionQueue.prototype;
 
 FunctionQueueProto._attach = function(_func)
@@ -65,7 +63,7 @@ FunctionQueueProto._detach = function(_func)
   
   var i = this.queue_.indexOf(_func);
   
-  if(i === -1)
+  if(i < 0)
     return false;
   
   this.queue_.splice(i, 1);
@@ -74,13 +72,13 @@ FunctionQueueProto._detach = function(_func)
 };
 FunctionQueueProto._has = function(_func)
 {
-  return this.queue_.indexOf(_func) !== -1;
+  return this.queue_.indexOf(_func) > -1;
 };
 FunctionQueueProto._apply = function(that, args)
 {
   var q = this.queue_, i = q.length;
   
-  if(args != null)
+  if(args != null && args.length > 0)
   {
     while(i-- && q[i].apply(that, args) !== false)
       ;
@@ -91,13 +89,13 @@ FunctionQueueProto._apply = function(that, args)
       ;
   }
   
-  return i === -1;
+  return i < 0;
 };
 FunctionQueueProto._applyAll = function(that, args)
 {
   var q = this.queue_, i = q.length;
   
-  if(args != null)
+  if(args != null && args.length > 0)
   {
     while(i--)
       q[i].apply(that, args);
