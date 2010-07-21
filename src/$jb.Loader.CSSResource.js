@@ -49,7 +49,7 @@ $jb.Loader.extToMimeMap['.css'] = 'text/css';
 
 $jb.Loader.CSSResource = function()
 {
-
+  this.isExtractImports = false;
 };
 
 /** @alias */
@@ -67,7 +67,8 @@ CSSResourceProto.canDeclareSelf = false;
   };
 })();  
   
-CSSResourceProto.sheetName_ = ($jb.nav._ie()) ? 'styleSheet' : 'sheet';
+//CSSResourceProto.sheetName_ = ($jb.nav._ie()) ? 'styleSheet' : 'sheet';
+CSSResourceProto.sheetName_ = ('styleSheet' in $d.createElement('link')) ? 'styleSheet' : 'sheet';
  
 CSSResourceProto._findLoadingUrls = function(_callback)
 {
@@ -110,6 +111,7 @@ if($jb.nav._opera() || $jb.nav._ie())
     link.rel = 'stylesheet';
     link.href = url;
 
+    //$h.insertBefore(link);
     $h.appendChild(link);
     
     return null;
@@ -121,7 +123,7 @@ else if($jb.nav._webkit() || $jb.nav._ff())
   {
     var
       nextId = 0, dataMap = {},      
-      _insertLink = function(url, mime)
+      _insertLink = function(url, mime, data)
       {
         var link = $d.createElement('link');
         
@@ -129,6 +131,7 @@ else if($jb.nav._webkit() || $jb.nav._ff())
         link.rel = 'stylesheet';
         link.href = url;
 
+        //$h.insertBefore(link);
         $h.appendChild(link);
       },
       _cleanUp, _onObjLoad, _fOnTimeout;
@@ -285,8 +288,22 @@ else
   CSSResourceProto._load = null;
 }  
 
-$jb.Loader.resouceTypes.push(($jb.Loader.cssResource = new $jb.Loader.CSSResource()))
+/*
+if($jb.nav._ie())
+{
+  CSSResourceProto._extractImports = function(v)
+  {
+    var imports = v[this.sheetName_].imports, i = -1, im, urlLoadStatusMap = $jb.Loader.urlLoadStatusMap;
+    
+    while((im = imports[++i]))
+    {
+      if(im.hrefurlLoadStatusMap[])
+    }
+  };
+}
+*/
 
+$jb.Loader.resouceTypes.push(($jb.Loader.cssResource = new $jb.Loader.CSSResource()))
 
 
 });
