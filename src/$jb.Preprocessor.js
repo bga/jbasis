@@ -36,7 +36,8 @@
 $jb.Loader._scope().
 //_require("$jb/$G.Function.js").
 _require("$jb/$G.String.js"). // ._escapeForRegExpReplace .trim ._optimizeCharsAccess
-_require("$jb/$G.Number.js"). // ._fixupIntToUIntBug
+//_require("$jb/$G.Number.js"). // ._fixupIntToUIntBug
+_require("$jb/$jb.JSParser.js"). // ._fMatchExpr
 _willDeclared("$jb/$jb.Preprocessor.js").
 _completed(function($G, $jb){
 
@@ -220,223 +221,9 @@ PreprocessorProto._undef = function(name, groupNames)
 };
 
 
-PreprocessorProto.__matchArg = function(s, p)
-{
-  var 
-    comma = -1,
-    
-    openBracket = -1,
-    closeBracket = -1,
-    
-    bracketCount = 0,
-    
-    openSquareBracket = -1,
-    closeSquareBracket = -1,
-    
-    openCurlyBracket = -1,
-    closeCurlyBracket = -1,
+PreprocessorProto.__matchArg = $jb.JSParser._fMatchExpr([',']);
 
-    singleQuote = -1, 
-    dblQuote = -1,
-    blockComment = -1,
-    lineComment = -1,
-    
-    regExp = -1,
-    
-    op,
-    
-    _min = Math.min
-    ;
-  
-  for(;;)
-  {
-    //console.log("p = " + p);
-    if(comma < p)
-    {
-      comma = s.indexOf(',', p) >>> 0;
-    }
-    
-    if(openBracket < p)
-    {
-      openBracket = s.indexOf('(', p) >>> 0;
-    }
-    if(closeBracket < p)
-    {  
-      closeBracket = s.indexOf(')', p) >>> 0;
-    }
-    
-    if(openSquareBracket < p)
-    {
-      openSquareBracket = s.indexOf('[', p) >>> 0;
-    }
-    if(closeSquareBracket < p)
-    {
-      closeSquareBracket = s.indexOf(']', p) >>> 0;
-    }
-    
-    if(openCurlyBracket < p)
-    {
-      openCurlyBracket = s.indexOf('{', p) >>> 0;
-    }
-    if(closeCurlyBracket < p)
-    {
-      closeCurlyBracket = s.indexOf('}', p) >>> 0;
-    }
-    
-    if(singleQuote < p)
-    {
-      singleQuote = (s.indexOf('\'', p)) >>> 0; 
-    }
-    if(dblQuote < p)
-    {
-      dblQuote = s.indexOf('"', p) >>> 0;
-    }
-    
-    if(blockComment < p)
-    {
-      blockComment = s.indexOf('/*', p) >>> 0;
-    }
-    if(lineComment < p)
-    {
-      lineComment = s.indexOf('//', p) >>> 0;
-    }
-    if(regExp < p)
-    {
-      regExp = s.indexOf('/', p) >>> 0;
-    }
-    
-    switch(_min(comma, openBracket, closeBracket, openSquareBracket, closeSquareBracket, openCurlyBracket, closeCurlyBracket, singleQuote, dblQuote, blockComment, lineComment, regExp))
-    {
-      case 4294967295:
-        return 4294967295;
-      
-      case comma:
-        //console.log('comma');
-        if(bracketCount == 0)
-          return comma;
-        
-        p = comma + 1;
-        break;
-      case openBracket:
-        //console.log('openBracket');
-        ++bracketCount;
-        p = openBracket + 1;
-        break;
-      case closeBracket:
-        //console.log('closeBracket');
-        if(--bracketCount == -1)
-          return closeBracket;
-          
-        p = closeBracket + 1;
-        
-        break;
-      case openSquareBracket:
-        //console.log('openSquareBracket');
-        ++bracketCount;
-        p = openSquareBracket + 1;
-        break;
-      case closeSquareBracket:
-        //console.log('closeSquareBracket');
-        if(--bracketCount == -1)
-          return closeSquareBracket;
-          
-        p = closeSquareBracket + 1;
-        
-        break;
-      case openCurlyBracket:
-        //console.log('openCurlyBracket');
-        ++bracketCount;
-        p = openCurlyBracket + 1;
-        break;
-      case closeCurlyBracket:
-        //console.log('closeCurlyBracket');
-        if(--bracketCount == -1)
-          return closeCurlyBracket;
-          
-        p = closeCurlyBracket + 1;
-        
-        break;
-      case singleQuote:
-        //console.log('singleQuote');
-        p = singleQuote;
-        
-        do
-        {
-          p = s.indexOf('\'',(op = p + 1));
-        }
-        while(p > -1  && s.charAt(p - 1) == '\\');
-        
-        if(p > -1)
-          ++p;
-        else
-          p = op + 1;
-        
-        break;
-      case dblQuote:
-        //console.log('dblQuote');
-        p = dblQuote;
-        
-        do
-        {
-          p = s.indexOf('"',(op = p + 1));
-        }
-        while(p > -1  && s.charAt(p - 1) == '\\');
-        
-        if(p > -1)
-          ++p;
-        else
-          p = op + 1;
-        
-        break;
-      case blockComment:
-        //console.log('blockComment');
-        p = s.indexOf('*/', blockComment + 2) >>> 0;
-
-        if(p == 4294967295)
-        {
-          blockComment = p; p = blockComment;
-        }
-        else
-        {
-          p  += 2;
-        }
-        
-        break;
-      case lineComment:
-        //console.log('lineComment');
-        p = s.indexOf('\n', lineComment + 2) >>> 0;
-
-        if(p == 4294967295)
-        {
-          lineComment = p; p = lineComment;
-        }
-        else
-        {
-          ++p;
-        }
-        
-        break;
-      case regExp:
-        //console.log('regExp');
-        p = regExp;
-        
-        do
-        {
-          p = s.indexOf('/',(op = p + 1));
-        }
-        while(p > -1  && s.charAt(p - 1) == '\\');
-        
-        if(p > -1)
-          ++p;
-        else
-          p = op + 1;
-        
-        break;
-    }
-  }
-};
-
-
+/*
 (function()
 {
   var a, b = a = (a  = '' + PreprocessorProto.__matchArg).
@@ -448,7 +235,7 @@ PreprocessorProto.__matchArg = function(s, p)
   if(a != b)  
     PreprocessorProto.__matchArg = new Function('s, p', a);
 })();
-
+*/
 (function()
 {
   var _cmp = function(a, b)
