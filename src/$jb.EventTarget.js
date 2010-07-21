@@ -70,6 +70,15 @@ EventTargetProto._detachEvent = function(name, _func, stage)
     
   return false;
 };
+EventTargetProto._hasEvent = function(name, _func, stage)
+{
+  var map = (stage == null) ? this.onEventFQMap_ : this[stage + 'EventFQMap_'];
+
+  if(name in map)
+    return map[name]._has(_func);
+    
+  return false;
+};
 EventTargetProto._lockEvent = function(name)
 {
   var elcm = this.eventLockCountMap_;
