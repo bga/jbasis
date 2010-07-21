@@ -58,21 +58,19 @@ if($jb.nav._webkit())
     };
 
     _wrap($G.Error);
-  })(window);
+  })($G);
 }
 
 /*
-$w.Error.prototype.valueOf = $w.Error.prototype.toString = function()
+$G.Error.prototype.valueOf = $G.Error.prototype.toString = function()
 {
   return this.message;
 };
 */
 
-var $w = $G.$w;
-
-if($w.DOMException == null)
+if($G.DOMException == null)
 {
-  $w.DOMException=
+  $G.DOMException=
   {
     INDEX_SIZE_ERR                 : 1,
     DOMSTRING_SIZE_ERR             : 2,
@@ -101,7 +99,7 @@ if($w.DOMException == null)
   };
 }
 
-var DOMException = $w.DOMException;
+var DOMException = $G.DOMException;
 
 DOMException.SECURITY_ERR = 18;
 DOMException.NETWORK_ERR = 19;
@@ -113,7 +111,7 @@ DOMException.ENCODING_ERR	= 26;	// The file data cannot be accurately represente
 DOMException.PARSE_ERR = 81;
 DOMException.SERIALIZE_ERR = 82;
 
-$w.DOMError = function(msg, code)
+$G.DOMError = function(msg, code)
 {
   Error.call(this);
   
@@ -121,10 +119,10 @@ $w.DOMError = function(msg, code)
   this.message = msg;
 };
 
-$w.DOMError.prototype = new Error();
+$G.DOMError.prototype = new Error();
 
-$w.DOMError.prototype.constructor = $w.DOMError;
-$w.DOMError.prototype.name = 'DOMException';
+$G.DOMError.prototype.constructor = $G.DOMError;
+$G.DOMError.prototype.name = 'DOMException';
 
 (function()
 {
@@ -164,38 +162,38 @@ $w.DOMError.prototype.name = 'DOMException';
   }
 })();
 
-if(!('FileError' in $w))
+if(!('FileError' in $G))
 {
-  $w.FileError = function(code)
+  $G.FileError = function(code)
   {
     this.code = code;
     this.message = '' + code;
   };
   
-  $w.FileError.prototype = new Error();
-  $w.FileError.prototype.constructor = $w.FileError;
-  $w.FileError.prototype.name = 'FileError';
+  $G.FileError.prototype = new Error();
+  $G.FileError.prototype.constructor = $G.FileError;
+  $G.FileError.prototype.name = 'FileError';
   
-  $w.FileError.NOT_FOUND_ERR	= 8; //	File not found.
-  $w.FileError.NOT_READABLE_ERR	= 24;	// File could not be read.
-  $w.FileError.SECURITY_ERR	= 18;	// The file could not be accessed for security reasons.
-  $w.FileError.ABORT_ERR	= 20;	// The file operation was aborted, probably due to a call to the FileReader abort() method.
-  $w.FileError.ENCODING_ERR	= 26;	// The file data cannot be accurately represented in a data URL.
+  $G.FileError.NOT_FOUND_ERR	= 8; //	File not found.
+  $G.FileError.NOT_READABLE_ERR	= 24;	// File could not be read.
+  $G.FileError.SECURITY_ERR	= 18;	// The file could not be accessed for security reasons.
+  $G.FileError.ABORT_ERR	= 20;	// The file operation was aborted, probably due to a call to the FileReader abort() method.
+  $G.FileError.ENCODING_ERR	= 26;	// The file data cannot be accurately represented in a data URL.
 }
 
 /*
-if(!('FileException' in $w))
+if(!('FileException' in $G))
 {
-  $w.FileException = function(code)
+  $G.FileException = function(code)
   {
     this.code = code;
   };
   
-  $w.FileException.NOT_FOUND_ERR	= 8; //	File not found.
-  $w.FileException.NOT_READABLE_ERR	= 24;	// File could not be read.
-  $w.FileException.SECURITY_ERR	= 18;	// The file could not be accessed for security reasons.
-  $w.FileException.ABORT_ERR	= 20;	// The file operation was aborted, probably due to a call to the FileReader abort() method.
-  $w.FileException.ENCODING_ERR	= 26;	// The file data cannot be accurately represented in a data URL.
+  $G.FileException.NOT_FOUND_ERR	= 8; //	File not found.
+  $G.FileException.NOT_READABLE_ERR	= 24;	// File could not be read.
+  $G.FileException.SECURITY_ERR	= 18;	// The file could not be accessed for security reasons.
+  $G.FileException.ABORT_ERR	= 20;	// The file operation was aborted, probably due to a call to the FileReader abort() method.
+  $G.FileException.ENCODING_ERR	= 26;	// The file data cannot be accurately represented in a data URL.
 }
 */
 
