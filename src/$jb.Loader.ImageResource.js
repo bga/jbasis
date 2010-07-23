@@ -100,15 +100,15 @@ ImageResourceProto._load = (function()
     {
       image.onload = function()
       {
-        image.onerror = null;
+        image = image.onload = image.onerror = null;
         
-        setTimeout(function(){ image.onload = null; _result(url, true); }, 0);
+        setTimeout(function(){ _result(url, true); }, 0);
       };
       image.onerror = function()
       {
-        image.onload = null;
+        image = image.onload = image.onerror = null;
         
-        setTimeout(function(){ image.onerror = null; _result(url, false); }, 0);
+        setTimeout(function(){ _result(url, false); }, 0);
       };
     }  
 
