@@ -216,62 +216,62 @@ Loader.__set_DOMNodeLoaded = function(v, _fn)
   {
     v.onreadystatechange = function()
     {
-      //alert(this.readyState);
-      if(v.readyState != "loaded" && v.readyState != "complete")
+      if(v.readyState != 'loaded' && v.readyState != 'complete')
         return;
 
-      v.onload = v.onerror = null;
-      
-      setTimeout
-      (
-        function()
-        {
-          v.onreadystatechange = null;
-          _fn(v, null);
-        },
-        0
-      );
-    };
-  }  
-  else if('onload' in v)
-  {
-    v.onload = function()
-    {
-      //alert('onload');
       v.onreadystatechange = v.onerror = null;
       
       setTimeout
       (
         function()
         {
-          v.onload = null;
+          _fn(v, null);
+          v = null;
+        },
+        0
+      );
+    };
+  }  
+  else //if('onload' in v) // 'on{any event}' in el === false in gecko
+  {
+    v.onload = function()
+    {
+      //console.log('onload');
+      v.onload = v.onerror = null;
+      
+      setTimeout
+      (
+        function()
+        {
           _fn(v, true);
+          v = null;
         },
         0
       );
     };
   }  
   
-  if('onerror' in v)
-  {
+  //if('onerror' in v)
+  //{
     v.onerror = function()
     {
-      //alert('onerror');
-      v.onreadystatechange = v.onload = null;
+      console.log('onerror');
+      v.onreadystatechange = v.onload = v.onerror = null;
       
       setTimeout
       (
         function()
         {
-          v.onerror = null;
           _fn(v, false);
+          v = null;
         },
         0
       );
     };
-  }  
+  //}
 };
 
+/*
 (function()
 {
   var s = $h.getElementsByTagName('script')[0],
@@ -300,14 +300,10 @@ Loader.__set_DOMNodeLoaded = function(v, _fn)
   
   checkerBody += "return null;";
   
-  /**
-    @fn try to check given script loaded state and declare script url. Can add listeners to detect state and declare later.  
-    @param v ref to script node
-  */
   Loader.__isDOMNodeLoaded = new Function('v', checkerBody);
   
 })();
-
+*/
 Loader._findResourceLoadingUrls = function(resouce)
 {
   //var L = Loader;
@@ -316,7 +312,7 @@ Loader._findResourceLoadingUrls = function(resouce)
   {
     //console.log(url+" "+isLoaded);
     Loader_urlLoadStatusMap[url] = isLoaded;
-    Loader_declaredUrlMap[url] = true;
+    Loader_declaredUrlMap[url] = (isLoaded !== false);
   };
 
   resouce._findLoadingUrls(_callback);
@@ -353,14 +349,65 @@ JSResourceProto._findLoadingUrls = function(_callback)
   var /* L = Loader, */
     ss = $h.getElementsByTagName('script'),
     src, i = -1, s, 
-    _fullUrlC = _fullUrl, __isDOMNodeLoaded = Loader.__isDOMNodeLoaded;
+    _fullUrlC = _fullUrl;
   
   while((s = ss[++i]))
   {
     if((src = s.getAttribute('src')) != null)
-      _callback(_fullUrlC(src), __isDOMNodeLoaded(s));
+      _callback(_fullUrlC(src), null); // nobody cares. only false value matter, but there is not simple way to detect load fail state of existing <script> node without complete reloading node... (except IE8, see above)
+      // but there is limited way to detect if node loaded successfuly. like below
+      //_callback(_fullUrlC(src), ((s.text || s.textContent) > '') ? true : null);
   }
 };
+
+/*#if ie == 8 */
+if(('recalc' in $d) && ('documentMode' in $d))
+{
+  // ie8 fire onreadystatechange readyState == 'complete' for loaded scripts and only readyState == 'loaded' for not loaded scripts
+  JSResourceProto._setupEvents = function(v, _result)
+  {
+    var timeoutId;
+    
+    v.onreadystatechange = function()
+    {
+      switch(this.readyState)
+      {
+        case 'complete':
+          if(timeoutId)
+            clearTimeout(timeoutId);
+            
+          v.onreadystatechange = null;
+          setTimeout(
+            function()
+            {
+              _result(v, true);
+              v = null;
+            },
+            0
+          );
+          
+          break;
+        
+        case 'loaded':
+          timeoutId = setTimeout(
+            function()
+            {
+              _result(v, false);
+              v = v.onreadystatechange = null;
+            },
+            1000 // for example
+          );
+          
+          break;
+      }
+    }
+  };
+}
+else/*#else*/
+{
+  JSResourceProto._setupEvents = Loader.__set_DOMNodeLoaded;
+}
+/*#endif*/
 
 JSResourceProto._load = function(mime, url, _result)
 {
@@ -373,8 +420,7 @@ JSResourceProto._load = function(mime, url, _result)
   
   if(_result != null)
   {
-    L.__set_DOMNodeLoaded
-    (
+    this._setupEvents(
       s,
       function(v, isLoaded)
       {
@@ -434,26 +480,10 @@ Loader.__nonSelfDeclareLoaded = function(url, isLoaded)
 
 Loader._urlExt = function(url)
 {
-  var begin = 0, end = url.length, point, i;
+  var end = url.lastIndexOf('?', url.lastIndexOf('#') >>> 0) >>> 0,
+    point = url.lastIndexOf('.', end);
   
-  if((i = url.lastIndexOf('#', end)) > 0)
-    end = i;
-  
-  if((i = url.lastIndexOf('?', end)) > 0)
-    end = i;
-  
-  if((i = url.lastIndexOf('.', end)) < 0)
-    return null;
-
-  point = i;
-  
-  if((i = url.lastIndexOf('/', end)) > -1)
-    begin = i;
-  
-  if(begin >= point)
-    return null;
-    
-  return url.substring(point, end);
+  return (point > -1) ? url.slice(point, end) : null;
 };
 
 Loader._mimeByUrl = function(url)
@@ -467,7 +497,7 @@ Loader._mimeByUrl = function(url)
   return L.extToMimeMap[ext];
 };
 
-Loader._rtByMime=function(mime)
+Loader._rtByMime = function(mime)
 {
   if(mime == null)
     return null;
@@ -478,7 +508,7 @@ Loader._rtByMime=function(mime)
   while(i-- && rts[i]._isSameMime(mime) != true)
     ;
     
-  if(i == -1)
+  if(i < 0)
     return null;
     
   return rts[i];
@@ -529,7 +559,7 @@ Loader.__requireUrl = function(url, nonCompatable, mime)
   var _loaded;
   
   if(rt.canDeclareSelf != true || nonCompatable == true)
-    _loaded=L.__nonSelfDeclareLoaded;
+    _loaded = L.__nonSelfDeclareLoaded;
   
   Loader_urlLoadStatusMap[url] = rt._load(mime, url, _loaded);
   
