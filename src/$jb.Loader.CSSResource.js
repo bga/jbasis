@@ -81,7 +81,7 @@ CSSResourceProto._findLoadingUrls = function(_callback)
   while((link = ls[++i]))
   {
     if(link.getAttribute('rel') == 'stylesheet' && (href = link.getAttribute('href')) != null)
-      _callback(_fullUrlC(href), link[sheetName] != null);
+      _callback(_fullUrlC(href), null);
   }
 };
 
@@ -133,12 +133,14 @@ else if($jb.nav._webkit() || $jb.nav._ff())
 
         //$h.insertBefore(link);
         $h.appendChild(link);
+        
+        return link;
       },
       _cleanUp, _onObjLoad, _fOnTimeout;
     
     if($jb.nav._ff()) // ff
     {
-      var iframe = $h.appendChild($d.createElement('iframe')), iframeDocEl,
+      var //iframe = $h.appendChild($d.createElement('iframe')), iframeDocEl,
         _insertScript = function(url, data)
         {
           var script = $d.createElement('script');
@@ -148,7 +150,7 @@ else if($jb.nav._webkit() || $jb.nav._ff())
           script.onerror = _onScriptError;
           script.jb_ = data;
 
-          iframeDocEl.appendChild(script);
+          $h.appendChild(script);
         },
         _cleanUp = function(jb)
         {
@@ -197,13 +199,15 @@ else if($jb.nav._webkit() || $jb.nav._ff())
           };
         };  
 
-      iframeDocEl = iframe.contentWindow.document;
+      /*
+      var iframeDoc = iframe.contentWindow.document;
     
-      iframeDocEl.open();
-      iframeDocEl.write('<html></html>');
-      iframeDocEl.close();
+      iframeDoc.open();
+      iframeDoc.write('<html></html>');
+      iframeDoc.close();
       
-      iframeDocEl = iframeDocEl.documentElement;
+      iframeDocEl = iframeDoc.documentElement;
+      */
     }
     else // webkit
     {
@@ -211,14 +215,18 @@ else if($jb.nav._webkit() || $jb.nav._ff())
         _cleanUp = function(jb)
         {
           delete dataMap[jb.selfId]; 
-          jb.obj.parentNode.removeChild(jb.obj)
+          jb.obj.parentNode.removeChild(jb.obj);
+          
+          if(jb.link)
+            jb.link.parentNode.removeChild(jb.link);
         },
         _onObjLoad = function()
         {
           //console.log("_onObjLoad");
           var jb = dataMap[this.getAttribute('jbLoaderDataId')]; 
           
-          _insertLink(jb.url, jb.mime);
+          if(!jb.link)
+            _insertLink(jb.url, jb.mime);
           
           jb._fn(jb.url, true);
           
@@ -232,7 +240,7 @@ else if($jb.nav._webkit() || $jb.nav._ff())
         },
         _sheetPollThread = function(jb)
         {
-          if(--jb.attempCount > 0 && !jb.obj.sheet)
+          if(--jb.attempCount > 0 && !jb.link.sheet)
             return;
           
           //console.log("_onScriptError");
@@ -243,13 +251,14 @@ else if($jb.nav._webkit() || $jb.nav._ff())
           
           _cleanUp(jb);
         },
-        _fOnTimeout = function(data)
+        _fOnTimeout = function(jb)
         {
           return function()
           {
-            data.timeoutId = null;
-            data.attempCount = 120;
-            data.sheetPollThreadId = setInterval(function(){ _sheetPollThread(data); }, 250);
+            jb.timeoutId = null;
+            jb.attempCount = 120;
+            jb.link = _insertLink(jb.url, jb.mime);
+            jb.sheetPollThreadId = setInterval(function(){ _sheetPollThread(jb); }, 250);
           };
         };  
     }
@@ -267,7 +276,7 @@ else if($jb.nav._webkit() || $jb.nav._ff())
       
       obj = $d.createElement('object');
       
-      dataMap[nextId] = data = {url: url, mime: mime, _fn: _result, obj: obj, selfId:nextId};
+      dataMap[nextId] = data = {url: url, mime: mime, _fn: _result, obj: obj, selfId: nextId};
       obj.data = url;
       obj.setAttribute('jbLoaderDataId', nextId);
       obj.onload = _onObjLoad;
