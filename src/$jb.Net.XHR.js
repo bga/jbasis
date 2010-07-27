@@ -150,7 +150,7 @@ XHRProto.__setRequestHeaders = function()
 {
   var i;
   var hm = this.requestHeaderMap;
-  var xhr_ = this.xhr_;
+  var xhr = this.xhr_;
   
   for(i in hm)
   {
