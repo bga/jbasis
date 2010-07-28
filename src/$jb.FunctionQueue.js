@@ -42,6 +42,9 @@ _completed(function($G, $jb){
 $jb.FunctionQueue = function()
 {
   this.queue_ = [];
+  this.queueDispatchShadow_;
+  
+  this._detach = this.__detach;
 };  
 
 /** @alias */
@@ -52,15 +55,15 @@ FunctionQueueProto._attach = function(_func)
   if(_func == null)
     return false;
   
-  this.queue_.unshift(_func);
+  (this.queueDispatchShadow_ || this.queue_).push(_func);
   
   return true;
 };
-FunctionQueueProto._detach = function(_func)
+FunctionQueueProto.__detach = function(_func)
 {
   if(_func == null)
     return false;
-  
+
   var i = this.queue_.indexOf(_func);
   
   if(i < 0)
@@ -70,14 +73,39 @@ FunctionQueueProto._detach = function(_func)
   
   return true;
 };
+FunctionQueueProto.__detachDispatch = function(_func)
+{
+  if(_func == null)
+    return false;
+
+  var q = this.queueDispatchShadow_ || this.queue_;
+  
+  var i = q.indexOf(_func);
+  
+  if(i < 0)
+    return false;
+  
+  if(!this.queueDispatchShadow_) 
+    q = this.queueDispatchShadow_ = this.queue_.slice(0);
+  
+  q.splice(i, 1);
+  
+  return true;
+};
+
 FunctionQueueProto._has = function(_func)
 {
-  return this.queue_.indexOf(_func) > -1;
+  return (this.queueDispatchShadow_ || this.queue_).indexOf(_func) > -1;
 };
 FunctionQueueProto._apply = function(that, args)
 {
+  if(this.queueDispatchShadow_)
+    throw '$jb.FunctionQueue#_apply nested _apply/_applyAll calls not supported';
+  
   var q = this.queue_, i = q.length;
   
+  this._detach = this.__detachDispatch;
+
   if(args != null && args.length > 0)
   {
     while(i-- && q[i].apply(that, args) !== false)
@@ -88,13 +116,24 @@ FunctionQueueProto._apply = function(that, args)
     while(i-- && q[i].call(that) !== false)
       ;
   }
+
+  if(this.queueDispatchShadow_)
+    this.queue_ = this.queueDispatchShadow_;
+    
+  this.queueDispatchShadow_ = null;
+  this._detach = this.__detach;
   
   return i < 0;
 };
 FunctionQueueProto._applyAll = function(that, args)
 {
+  if(this.queueDispatchShadow_)
+    throw '$jb.FunctionQueue#_applyAll nested _apply/_applyAll calls not supported';
+
   var q = this.queue_, i = q.length;
   
+  this._detach = this.__detachDispatch;
+
   if(args != null && args.length > 0)
   {
     while(i--)
@@ -106,6 +145,12 @@ FunctionQueueProto._applyAll = function(that, args)
       q[i].call(that);
   }
   
+  if(this.queueDispatchShadow_)
+    this.queue_ = this.queueDispatchShadow_;
+    
+  this.queueDispatchShadow_ = null;
+  this._detach = this.__detach;
+
   return true;
 };
 /*  
