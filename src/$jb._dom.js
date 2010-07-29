@@ -34,7 +34,6 @@
   cross browser support functions for DOM.Node
  
 */
-
 $jb.Loader._scope().
 //_require("$jb/$jb.nav.js").
 //_require("$jb/$G.Function.js").
@@ -50,6 +49,8 @@ if($jb.DOM == null)
   $jb.DOM = {};
   
 var _jq = jQuery, jqProto = _jq.prototype, _data = _jq.data;
+
+_jq.noConflict();
 
 var _dom = $jb._dom = function(expr, ctx)
 {
