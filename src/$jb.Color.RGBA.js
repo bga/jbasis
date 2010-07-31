@@ -39,30 +39,64 @@ $jb.Loader._scope().
 _willDeclared("$jb/$jb.Color.RGBA.js").
 _completed(function($G, $jb){
 
+/**@namespace $jb.Color contains color classes */
 if($jb.Color == null)
   $jb.Color = {};
 
+/**
+  @class represent rgba color and allow operate with it, parse from string and stringify ti various form 
+  @constructor allow create color by component ( > 1 arguments passed ) or from string (1 argument passed)
+  @param r {Number} {Optional} red component of creating color or null for default value = 0 
+  @param g {Number} {Optional} green component of creating color or null for default value = 0 
+  @param b {Number} {Optional} blue component of creating color or null for default value = 0 
+  @param a {Number} {Optional} alpha component of creating color or null for default value = 1.0
+*/
 $jb.Color.RGBA = function(r, g, b, a)
 {
-  this.r = r || 0; // 0-255
-  this.g = g || 0; // 0-255
-  this.b = b || 0; // 0-255
-  this.a = a || 1.0; // 0.0-1.0
+  if(arguments.length == 1)
+  {
+    this._fromString(r);
+  }
+  else
+  {
+    /**@var {Number} red component 0 - 255 @default 0*/
+    this.r = r || 0;
+    
+    /**@var {Number} green component 0 - 255 @default 0*/
+    this.g = g || 0;
+
+    /**@var {Number} blue component 0 - 255 @default 0*/
+    this.b = b || 0;
+    
+    /**@var {Number} alpha component 0 - 1.0 @default 1.0*/
+    this.a = a || 1.0;
+  }  
 };    
   
 /** @alias */
 var RGBAProto = $jb.Color.RGBA.prototype;
   
+/**@var default epsilon for rgba color class instance */ 
 RGBAProto.eps = 0.001;
+
+/**@var default 1.0 - epsilon for rgba color class instance */ 
 RGBAProto.oneSubEps = 1.0 - RGBAProto.eps;
   
-RGBAProto._cloneStrict=
-RGBAProto._copyStrict=
+/**@fn costum method to strict clone rgba color class instance */ 
+RGBAProto._cloneStrict =
+/**@fn costum method to strict copy rgba color class instance */ 
+RGBAProto._copyStrict =
 function()
 {
   return new $jb.Color.RGBA(this.r, this.g, this.b, this.a);
 };
   
+/**
+  @fn mul each component of color by number except alpha component <b>without clipping</b>
+  @param n {Number} number to mul 
+  
+  @return {$jb.Color.RGBA} this
+*/
 RGBAProto._mulNumber = function(n)
 {
   this.r *= n;
@@ -74,6 +108,12 @@ RGBAProto._mulNumber = function(n)
   
   return this;
 };
+
+/**
+  @fn normalize each component of color by alpha component - mul on alpha component and set alpha component to 1.0 
+  
+  @return {$jb.Color.RGBA} this
+*/
 RGBAProto._normalizeAlpha = function()
 {
   if(this.a == 1.0)
@@ -88,8 +128,19 @@ RGBAProto._normalizeAlpha = function()
   
   return this;
 };
+
+/**
+  @fn add another color, component by component without alpha component and clipping
+  
+  @param c {$jb.Color.RGBA || color string} color to add
+  
+  @return {$jb.Color.RGBA} this
+*/
 RGBAProto._addColor = function(c)
 {
+  //if(typeof(c) == 'string')
+  //  c = new $jb.Color.RGBA(c);
+  
   this.r += c.r;
   this.g += c.g;
   this.b += c.b;
@@ -98,8 +149,19 @@ RGBAProto._addColor = function(c)
   
   return this;
 };
+
+/**
+  @fn add another color, component by component considering alpha component but without clipping
+  
+  @param c {$jb.Color.RGBA || color string} color to add
+  
+  @return {$jb.Color.RGBA} this
+*/
 RGBAProto._addColorA = function(c)
 {
+  //if(typeof(c) == 'string')
+  //  c = new $jb.Color.RGBA(c);
+
   var coef = c.a/this.a;
   
   if(coef > this.oneSubEps)
@@ -119,8 +181,19 @@ RGBAProto._addColorA = function(c)
   
   return this;
 };
+
+/**
+  @fn blend with another color without clipping
+  
+  @param c {$jb.Color.RGBA || color string} color with which blend
+  
+  @return {$jb.Color.RGBA} this
+*/
 RGBAProto._blendWithColor = function(c)
 {
+  //if(typeof(c) == 'string')
+  //  c = new $jb.Color.RGBA(c);
+
   if(this.a > this.oneSubEps)
     return this;
 
@@ -142,6 +215,11 @@ RGBAProto._blendWithColor = function(c)
 };
 
 
+/**
+  @fn clip color without alpha component
+  
+  @return {$jb.Color.RGBA} this
+*/
 RGBAProto._clipUp = function()
 {
   if(this.r > 255.0)
@@ -153,6 +231,12 @@ RGBAProto._clipUp = function()
     
   return this;  
 };
+
+/**
+  @fn clip color with alpha component
+  
+  @return {$jb.Color.RGBA} this
+*/
 RGBAProto._clipUpA = function()
 {
   if(this.a > 1.0)
@@ -161,7 +245,13 @@ RGBAProto._clipUpA = function()
   return this;
 };
 
-// @source http://en.wikipedia.org/wiki/HSL_and_HSV
+/**
+  @fn convert color to hvs representation
+  
+  @source http://en.wikipedia.org/wiki/HSL_and_HSV
+  
+  @return {$jb.Color.HSVA} new hsva color
+*/
 RGBAProto._toHSVA = function()
 {
   var r = this.r*0.003921568, // *1/255
@@ -205,25 +295,53 @@ RGBAProto._toHSVA = function()
   
   return new $jb.Color.HSVA(2*Math.PI*h, s, v, this.a);  
 };
+
+/**
+  @fn convert color to rgb(r,g,b) string
+  
+  @return {String} rgb(r,g,b) string
+*/
 RGBAProto._toRGBString = function()
 {
   return 'rgb(' + (this.r|0) + ',' + (this.g|0) + ',' + (this.b|0) + ')';
 };
+
+/**
+  @fn convert color to rgba(r,g,b,a) string
+  
+  @return {String} rgba(r,g,b,a) string
+*/
 RGBAProto._toRGBAString = function()
 {
   return 'rgba(' + (this.r|0) + ',' + (this.g|0) + ',' + (this.b|0) + ',' + this.a + ')';
 };
 
+/**
+  @fn convert color to #rrggbb hex string
+  
+  @return {String} #rrggbb hex string
+*/
 RGBAProto._toCSSString = function()
 {
   return '#' + (this.r|256).toString(16).slice(1) + (this.g|256).toString(16).slice(1) + (this.b|256).toString(16).slice(1);
 };
-RGBAProto._toCSSAString=function()
+
+/**
+  @fn convert color to #rrggbbaa hex string
+  
+  @return {String} #rrggbbaa hex string
+*/
+RGBAProto._toCSSAString = function()
 {
   return '#' + (this.r|256).toString(16).slice(1) + (this.g|256).toString(16).slice(1) + (this.b|256).toString(16).slice(1) + + ((255*this.a)|256).toString(16).slice(1);
 };
 
-RGBAProto.toString=function()
+/**
+  @fn costum toString method which convert color to rgba(r,g,b,a) or rgb(r,g,b) string depend of alpha component value
+  
+  @return {String} rgba(r,g,b,a) or rgb(r,g,b) string
+*/
+RGBAProto.toString = function()
 {
   if(this.a > this.oneSubEps)
     return this._toRGBString();
@@ -240,6 +358,11 @@ RGBAProto.toString=function()
     return (t.slice(-1) == '%') ? 2.55*t.slice(0, -1) : +t;
   };
 
+  /**
+    @fn parse color from any popular string representation of color i.e. rgb(r,g,b) rgba(r,g,b,a) #rgb #rrggbb #rrggbbaa and set all color components. Also hsv(h,s,v) hsva(h,s,v,a) with convertation to rgba if $jb.Color.HSVA class loaded
+    
+    @return {Boolean} parse success status 
+  */
   RGBAProto._fromString = function(s)
   {
     // css color
@@ -278,7 +401,7 @@ RGBAProto.toString=function()
       j = 3;
       endChar = ')';
     }
-    else if(s.substr(0, 5) == "rgba(")
+    else if(s.substr(0, 5) == 'rgba(')
     {
       j = 4;
       endChar = ',';
@@ -294,7 +417,7 @@ RGBAProto.toString=function()
     
     // canvas rgba
     if(endChar == ',')
-      this.a = 0.003921568*_parseValueC(s.substring(++j, (j = s.indexOf(')', j))));
+      this.a = 0.003921568*_parseValueC(s.substring(++j, (j = s.indexOf(')', j)))); // 1/255*
     
     if(j > 0)
       return true;
