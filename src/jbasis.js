@@ -360,9 +360,7 @@ JSResourceProto._findLoadingUrls = function(_callback)
   }
 };
 
-/*#if ie == 8 */
-if(('recalc' in $d) && ('documentMode' in $d))
-{
+/*#if ie == 8 */ /*#<*/ if(('recalc' in $d) && ('documentMode' in $d)) { /*#>*/
   // ie8 fire onreadystatechange readyState == 'complete' for loaded scripts and only readyState == 'loaded' for not loaded scripts
   JSResourceProto._setupEvents = function(v, _result)
   {
@@ -402,12 +400,10 @@ if(('recalc' in $d) && ('documentMode' in $d))
       }
     }
   };
-}
-else/*#else*/
-{
+/*#else*/ /*#<*/ } else { /*#>*/
   JSResourceProto._setupEvents = Loader.__set_DOMNodeLoaded;
-}
-/*#endif*/
+/*#endif*/ /*#<*/ } /*#>*/
+
 
 JSResourceProto._load = function(mime, url, _result)
 {
@@ -789,4 +785,15 @@ Loader._scope = function()
   return new Loader.Scope();
 };
 
+/*
+var _wrapNative = function(_con)
+{
+  return function()
+  {
+    return _con.apply(this, arguments);
+  };
+};
+
+$jb.Function = _wrapNative($G.Function);
+*/
 })($G);
