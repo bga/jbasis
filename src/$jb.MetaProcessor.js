@@ -244,6 +244,7 @@ $jb.MetaProcessor = function(_testExpr)
   };
 
   var 
+    removeRE = /\/\*##<\*\/[\s\S]*?\/\*##>\*\//g,
     stripRE = /\/\*##([\s\S]*?)\*\//g,
     evalRE = /\/\*#eval\*\/([\s\S]*?)\/\*#endeval\*\//g,
     _evalREReplacer = 
@@ -261,6 +262,7 @@ $jb.MetaProcessor = function(_testExpr)
     _testExprL = this._testExpr;
     
     return _passIf(code, 0).
+      replace(removeRE, '').
       replace(stripRE, '$1').
       replace(evalRE, _evalREReplacer)
     ;
