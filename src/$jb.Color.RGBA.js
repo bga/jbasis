@@ -45,7 +45,7 @@ if($jb.Color == null)
 
 /**
   @class represent rgba color and allow operate with it, parse from string and stringify ti various form 
-  @constructor allow create color by component ( > 1 arguments passed ) or from string (1 argument passed)
+  @constructor allow create color by component ( first argument not string) or from string (first argument is string, second, optional, is alpha component with default = 1.0)
   @param r {Number} {Optional} red component of creating color or null for default value = 0 
   @param g {Number} {Optional} green component of creating color or null for default value = 0 
   @param b {Number} {Optional} blue component of creating color or null for default value = 0 
@@ -53,8 +53,9 @@ if($jb.Color == null)
 */
 $jb.Color.RGBA = function(r, g, b, a)
 {
-  if(arguments.length == 1)
+  if(typeof(r) == 'string')
   {
+    this.a = (g != null) ? g : 1.0;
     this._fromString(r);
   }
   else
@@ -69,7 +70,7 @@ $jb.Color.RGBA = function(r, g, b, a)
     this.b = b || 0;
     
     /**@var {Number} alpha component 0 - 1.0 @default 1.0*/
-    this.a = a || 1.0;
+    this.a = (a != null) ? a : 1.0;
   }  
 };    
   
@@ -333,7 +334,7 @@ RGBAProto._toCSSString = function()
 */
 RGBAProto._toCSSAString = function()
 {
-  return '#' + (this.r|256).toString(16).slice(1) + (this.g|256).toString(16).slice(1) + (this.b|256).toString(16).slice(1) + + ((255*this.a)|256).toString(16).slice(1);
+  return '#' + (this.r|256).toString(16).slice(1) + (this.g|256).toString(16).slice(1) + (this.b|256).toString(16).slice(1) + ((255*this.a)|256).toString(16).slice(1);
 };
 
 /**
