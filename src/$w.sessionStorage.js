@@ -34,252 +34,426 @@
   @section DESCRIPTION
 */
 
-if(!("jbSessionStorage" in $w))
+if(!("jbSessionStorage" in window))
 {
-  if(!("jbStorage" in window))
-    window.jbStorage=function(){};
-    
-  window.ss_=window.jbSessionStorage=new jbStorage();
-  
-  ss_.keyValueMap_={};
-  
-  if(window.opera)
-    ss_.tSpace_=16500000;
-  else if(document.recalc)
-    ss_.tSpace_=55000000;
-  else if(window.navigator.mozIsLocallyAvailable)
-    ss_.tSpace_=25000000;
-  else if(window.WebKitPoint)
-    ss_.tSpace_=78000000;
-  else
-    ss_.tSpace_=8000000; // why???
-  
-  ss_.eSpace_=null;
-  ss_.length=null;
-  ss_.needReenum_=true;
-  ss_.keys_=[];
-  
-  ss_._load=function()
+  (function(window)
   {
-    var d=+new Date();
-    var t=window.top.name;
+  
+  var Date = window.Date, setTimeout = window.setTimeout, String = window.String;
+  
+  if(!("jbStorage" in window))
+    window.jbStorage = function(){};
     
-    if(t.substr(0, 16) !== "jbSessionStorage")
+  var sessionStorage = window.jbSessionStorage = new jbStorage();
+  
+  sessionStorage.keyValueMap_ = {};
+  
+  if(window.opera) // opera
+    sessionStorage.tSpace_ = 16500000;
+  else if(document.recalc) // ie
+    sessionStorage.tSpace_ = 55000000;
+  else if(window.navigator.mozIsLocallyAvailable) // gecko
+    sessionStorage.tSpace_ = 25000000;
+  else if(window.WebKitPoint) // webkit
+    sessionStorage.tSpace_ = 78000000;
+  else
+    sessionStorage.tSpace_ = 8000000; // why???
+  
+  sessionStorage.eSpace_ = null;
+  sessionStorage.length = null;
+  sessionStorage.needReenum_ = true;
+  sessionStorage.keys_ = [];
+  
+  sessionStorage._load = function()
+  {
+    var t = window.top.name;
+    
+    if(t.substr(0, 16) != "jbSessionStorage")
     {
-      this.eSpace_=this.tSpace_;
-      this.keys_.length=this.length=0;
-      this.needReenum_=false;
-      this.keyValueMap_={};
+      this.eSpace_ = this.tSpace_;
+      this.keys_.length = this.length = 0;
+      this.needReenum_ = false;
+      this.keyValueMap_ = {};
       
       return;
     }
       
-    var i=16, j, len=t.length, temp;
-    var key, value;
-    var kvm=this.keyValueMap_, ks=this.keys_;
-    var n=0;
+    var i = 16, j, len = t.length, temp,
+      key, value,
+      kvm = this.keyValueMap_, ks = this.keys_,
+      n = 0;
     
-    while(i<len)
+    while(i < len)
     {
-      temp=t.charCodeAt(i++);
+      temp = t.charCodeAt(i++);
     
       if(temp&0x8000)
-        temp+=(t.charCodeAt(i++)<<15);
+        temp += (t.charCodeAt(i++)<<15);
         
-      key=t.substring(j=i, i+=temp);
+      key = t.substring((j = i), (i += temp));
 
-      temp=t.charCodeAt(i++);
+      temp = t.charCodeAt(i++);
     
       if(temp&0x8000)
-        temp+=(t.charCodeAt(i++)<<15);
+        temp += (t.charCodeAt(i++)<<15);
         
-      value=t.substring(j=i, i+=temp);
+      value = t.substring((j = i), (i += temp));
       
-      kvm[key]=value;
-      ks[n++]=key;
+      kvm[key] = value;
+      ks[n++] = key;
     }
     
-    this.eSpace_=this.tSpace_-len;
-    this.length=n;
-    this.needReenum_=false;
-    alert("load "+(new Date()-d)+" len = "+t.length);
+    this.eSpace_ = this.tSpace_ - len;
+    this.length = n;
+    this.needReenum_ = false;
+    //alert("load "+(new Date()-d)+" len  =  "+t.length);
   };
   
-  ss_._save=function()
+  sessionStorage._save = function()
   {
-    var d=+new Date();
-    var t="jbSessionStorage";
-    var key, kvm=this.keyValueMap_, value, n;
-    var _fromCharCode=String.fromCharCode;
+    var d = +new Date(); 
+    var t = "jbSessionStorage";
+    var key, kvm = this.keyValueMap_, value, n;
+    var _fromCharCode = String.fromCharCode;
     
     for(key in kvm)
     {
       if(!kvm.hasOwnProperty(key))
         continue;
 
-      if((n=key.length)<=0x7FFF)
-        t+=_fromCharCode(n);
+      if((n = key.length) <= 0x7FFF)
+        t += _fromCharCode(n);
       else
-        t+=_fromCharCode((n&0x7FFF)|0x8000)+_fromCharCode(n>>15);
+        t += _fromCharCode((n&0x7FFF)|0x8000) + _fromCharCode(n>>15);
 
-      t+=key;
+      t += key;
 
-      if((n=(value=kvm[key]).length)<=0x7FFF)
-        t+=_fromCharCode(n);
+      if((n=(value = kvm[key]).length) <= 0x7FFF)
+        t += _fromCharCode(n);
       else
-        t+=_fromCharCode((n&0x7FFF)|0x8000)+_fromCharCode(n>>15);
+        t += _fromCharCode((n&0x7FFF)|0x8000) + _fromCharCode(n>>15);
 
-      t+=value;
+      t += value;
     }
     
-    window.top.name=t;
-    alert("save "+(new Date()-d)+" len "+t.length);
+    window.top.name = t;
+    //alert("save "+(new Date()-d)+" len "+t.length);
   };
   
-  ss_._reenum=function()
+  if(Object.keys)
   {
-    var kvm=this.keyValueMap_, ks=this.keys_, i=0;
-    
-    ks.length=0;
-    
-    for(var key in kvm)
+    sessionStorage._reenum = function()
     {
-      if(kvm.hasOwnProperty(key))
-        ks[i++]=key;
-    }
-    
-    this.needReenum_=false;
-  };
-  
-  ss_.key=function(index)
+      var kvm = this.keyValueMap_, ks = this.keys_, i = 0;
+      
+      ks.length = 0;
+      
+      for(var key in kvm)
+      {
+        if(kvm.hasOwnProperty(key))
+          ks[i++] = key;
+      }
+    };
+  }
+  else
   {
-    if(this.needReenum_)
-      this._reenum();
+    sessionStorage._reenum = function()
+    {
+      var kvm = this.keyValueMap_, ks = this.keys_, i = 0;
+      
+      ks.length = 0;
+      
+      for(var key in kvm)
+      {
+        if(kvm.hasOwnProperty(key))
+          ks[i++] = key;
+      }
+    };
+  }
+  
+  sessionStorage.__keyClear = function(index)
+  {
+    return this.keys_[index|0];  
+  };
+  sessionStorage.__keyReenum = function(index)
+  {
+    this._reenum();
       
     return this.keys_[index|0];  
   };
   
-  ss_.getItem=function(key)
+  sessionStorage.getItem = function(key)
   {
-    return this.keyValueMap_[""+key];
+    return this.keyValueMap_['' + key];
   };
   
-  ss_.setItem=function(key, value)
+  sessionStorage.setItem = function(key, value)
   {
-    key+="";
-    value+="";
+    key += '';
+    value += '';
     
-    var kvm=this.keyValueMap_;
-    var delta=0, oldValue=null, isValueChanged;
+    var kvm = this.keyValueMap_;
+    var delta = 0, oldValue = null, isValueChanged;
     
     if(kvm.hasOwnProperty(key))
     {
-      delta=value.length-(oldValue=kvm[key]);
-      isValueChanged= value !== oldValue;
+      delta = value.length - (oldValue = kvm[key]);
+      isValueChanged = value !== oldValue;
     }
     else
     {
-      delta=key.length+value.length+2;
+      delta = key.length + value.length + 2;
       ++this.length;
-      this.needReenum_=true;
-      isValueChanged=true;
+      this.needReenum_ = isValueChanged = true;
     }
     
-    if(delta>this.eSpace_)
+    if(delta > this.eSpace_)
     {
-      var err=new Error();
+      var err = new Error();
       
-      err.name="DOMException";
-      err.code=22; // QUOTA_EXCEEDED_ERR
+      err.name = 'DOMException';
+      err.code = 22; // QUOTA_EXCEEDED_ERR
       
       throw err;
     }
     else
     {
-      this.eSpace_-=delta;
+      this.eSpace_ -= delta;
     }
     
-    kvm[key]=value;
+    kvm[key] = value;
     
     if(isValueChanged)
+    {
+      this._fireStorageEvent(key, oldValue, value);
       this._afterchange();
+    }  
   },
-  ss_.removeItem=function(key)
+  sessionStorage.removeItem = function(key)
   {
-    key+="";
+    key += '';
     
-    var kvm=this.keyValueMap_;
+    var kvm = this.keyValueMap_;
     
     if(!kvm.hasOwnProperty(key))
       return;
     
-    var oldValue=kvm[key];
+    var oldValue = kvm[key];
     
-    this.eSpace_+=key.length+oldValue.length+2;
+    this.eSpace_ += key.length + oldValue.length + 2;
     --this.length;
-    this.needReenum_=true;
+    this.needReenum_ = true;
     delete kvm[key];
     
+    this._fireStorageEvent(key, oldValue, null);
     this._afterchange();
   },
-  ss_.clear=function()
+  sessionStorage.clear = function()
   {
-    this.keyValueMap_={};
-    this.eSpace_=this.tSpace_;
-    this.keys_.length=0;
-    this.needReenum_=false;
+    this.keyValueMap_ = {};
+    this.eSpace_ = this.tSpace_;
+    this.keys_.length = 0;
+    this.needReenum_ = false;
     
+    this._fireStorageEvent(null, null, null);
     this._afterchange();
   }
-  ss_._afterchange=function(){};
+  /*
+  if(document.createEvent)
+  {
+    window.BgaEvent=function(){};
+    window.BgaEvent.prototype.initBgaEvent=function(){};
+
+    if(!(function()
+      { 
+        var e;
+        
+        return (e = document.createEvent('BgaEvent')) && e.initBgaEvent;
+      })()
+    )
+    {
+      (function()
+      {
+        var _oCreateEvent = document.createEvent;
+        
+        document.createEvent = function(className)
+        {
+          var e;
+          
+          try
+          {
+            e = _oCreateEvent.call(document, className);
+          }
+          catch(err)
+          {
+            var _class;
+            
+            if(typeof(_class = window[className]) === "function")
+              throw err;
+            
+            e = _oCreateEvent.call(document, 'Event');
+            
+            var classPr = _class.prototype, name;
+            
+            for(name in classPr)
+            {
+              if(pr.hasOwnProperty(name))
+                e[name] = pr[name];
+            }
+          }
+          
+          return e;
+        };
+      })();
+    }  
+  }  
+  StorageEvent
+  if(document.createEvent && !document.createEvent("Event").initStorageEvent)
+  {
+    Event.prototype.initStorageEvent=function(
+      typeArg,canBubbleArg,cancelableArg,
+      keyArg,oldValueArg,newValueArg,urlArg,storageAreaArg
+    )
+    {
+      //this.type=typeArg;
+      //this.canBubble=canBubbleArg;
+      //this.cancelable=cancelableArg;
+      this.key=keyArg;
+      this.oldValue=oldValueArg;
+      this.newValue=newValueArg;
+      this.url=urlArg;
+      this.storageArea=storageAreaArg;
+    };
+  }
   
-  ss_._load();
+  if(document.fireEvent)
+  {
+    (function()
+    {
+      var _oAttachEvent=document.attachEvent;
+      var _oDetachEvent=document.detachEvent;
+      var _oFireEvent=document.fireEvent;
+      
+      var eventMap=
+      {
+        "onstorage":[],
+        "onstoragecommit":[]
+      };
+      
+      document.attachEvent=function(name,_fn)
+      {
+        var nameLower = name.toLowerCase(), temp;
+        
+        return ((temp = eventMap[nameLower]) && temp.push(_fn)) || _oAttachEvent.call(document, name, _fn)
+      };
+      
+      document.detachEvent=function(name,_fn)
+      {
+        var nameLower = name.toLowerCase(), temp, i;
+        
+        if((temp = eventMap[nameLower]))
+        {
+          if((i = temp.indexOf(_fn)) !== -1)
+            return temp.splice(i,1);
+        }
+        
+        return _oDetachEvent.call(document, name, _fn);
+      };
+      
+      document.fireEvent=function(name, e)
+      {
+        var nameLower = name.toLowerCase(), temp;
+        
+        if(!(temp = eventMap[nameLower]))
+          return _oAttachEvent.call(document, name, _fn);
+          
+        var i = -1, len=temp.length;
+        
+        e.cancelBubble=false;
+        
+        while(++i !== len)
+          temp[i].call(document, e)
+      };
+      
+    })();
+ 
+    sessionStorage._fireStorageEvent = function(key, oldValue, newValue)
+    {
+      var e = document.createEventObject();
+      
+      e.key = key;
+      e.oldValue = oldValue;
+      e.newValue = newValue;
+      e.url = document.location+"";
+      e.storageArea = jbSessionStorage;
+      
+      document.fireEvent("onstorage", e);
+    };
+  }
+  else
+  {
+    sessionStorage._fireStorageEvent=function(key, oldValue, newValue)
+    {
+      //var e=document.createEvent("StorageEvent");
+      var e=document.createEvent("Event");
+      
+      e.initEvent("storage", false, false);
+      e.initStorageEvent("storage", false, false, key, oldValue, newValue, document.location+"", jbSessionStorage);
+      
+      document.dispatchEvent(e);
+    };
+  };
+  */
+  sessionStorage._fireStorageEvent = function(){};
+
+  sessionStorage._afterchange = function(){};
   
-  ss_._saveBind=function(){ jbSessionStorage._save(); };
+  sessionStorage._load();
+  
+  sessionStorage._saveBind = function(){ jbSessionStorage._save(); };
   
   if(window.opera)
   {
     try
     {
-      opera.io.webserver.addEventListener('_close', ss_._saveBind, false);
+      // thanks to Ilia Kantor
+      opera.io.webserver.addEventListener('_close', sessionStorage._saveBind, false);
     }
     catch(err)
     {
-      ss_.saveDelay_=250;
-      ss_.lastChangeTime_=0;
-      ss_.saveTimeoutId_=null;
+      sessionStorage.saveDelay_ = 250;
+      sessionStorage.lastChangeTime_ = 0;
+      sessionStorage.saveTimeoutId_ = null;
       
-      ss_._saveTimeout=function()
+      sessionStorage._saveTimeout = function()
       {
-        if((new Date())-this.lastChangeTime_<50)
+        if((new Date()) - this.lastChangeTime_ < 50)
         {
-          console.log("wait");
-          
-          return this.saveTimeoutId_=setTimeout(this._saveTimeoutBind, this.saveDelay_);
+          return this.saveTimeoutId_ = setTimeout(this._saveTimeoutBind, this.saveDelay_);
         }
         
-        this.saveTimeoutId_=null;
+        this.saveTimeoutId_ = null;
         this._save();  
       };
       
-      ss_._saveTimeoutBind=function(){ jbSessionStorage._saveTimeout(); };
+      sessionStorage._saveTimeoutBind = function(){ jbSessionStorage._saveTimeout(); };
       
-      ss_._afterchange=function()
+      sessionStorage._afterchange = function()
       {
-        this.lastChangeTime_=+new Date();
+        this.lastChangeTime_ = +new Date();
         
-        if(this.saveTimeoutId_==null)
-          this.saveTimeoutId_=setTimeout(this._saveTimeoutBind, this.saveDelay_);
+        if(this.saveTimeoutId_ == null)
+          this.saveTimeoutId_ = setTimeout(this._saveTimeoutBind, this.saveDelay_);
       };
     }
   }
   else
   {
     if(window.addEventListener)
-      window.addEventListener("unload", ss_._saveBind, false);
+      window.addEventListener('unload', sessionStorage._saveBind, true);
     else  
-      window.attachEvent("onunload", ss_._saveBind);
+      window.attachEvent('onunload', sessionStorage._saveBind);
   }
   
-  window.ss_=undefined;  
+  })(this);
 }

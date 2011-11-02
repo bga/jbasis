@@ -35,21 +35,37 @@
 */
 
 $jb.Loader._scope().
-_require("$jb/$G.Array.js"). // for Array.prototype.indexOf
-_willDeclared("$jb/$jb.FunctionQueue.js").
+_require('$jb/$G.Array.js'). // for Array.prototype.indexOf
+_willDeclared('$jb/$jb.FunctionQueue.js').
 _completed(function($G, $jb){
 
+/**
+  @class allow you manage array of functions (add, delete, has), call functions (with or without break on false return), also some extra functionality like <$jb.FunctionQueue#_isEmpty> or <$jb.FunctionQueue#_fApply>
+*/
 $jb.FunctionQueue = function()
 {
+  /** @var {Array(Function)} array of functions */
   this.queue_ = [];
-  this.queueDispatchShadow_;
   
+  /** @var {Array(Function)} shadow of <$jb.FunctionQueue#queue_> during dispatch. Allow safe add or remove functions during dispatch without keeping dispatching queue original */ 
+  this.queueDispatchShadow_ = null;
+  
+  /**
+    @fn delete <_func> from queue
+    @param _func {Function} function to delete
+    @return {Boolean} true if <_func> suuccessfilly deleted else false
+  */  
   this._detach = this.__detach;
 };  
 
 /** @alias */
 var FunctionQueueProto = $jb.FunctionQueue.prototype;
 
+/**
+  @fn add <_func> to queue
+  @param _func {Function} function to add
+  @return {Boolean} true if <_func> suuccessfilly added else false
+*/  
 FunctionQueueProto._attach = function(_func)
 {
   if(_func == null)
@@ -59,6 +75,25 @@ FunctionQueueProto._attach = function(_func)
   
   return true;
 };
+
+/**
+  @fn add <_func> to queue if <_func> not added before
+  @param _func {Function} function to add
+  @return {Boolean} true if <_func> successfilly added else false
+*/  
+FunctionQueueProto._reattach = function(_func)
+{
+  if(_func == null)
+    return false;
+  
+  var q = this.queueDispatchShadow_ || this.queue_;
+  
+  if(q.indexOf(_func) > -1)
+    q.push(_func);
+  
+  return true;
+};
+
 FunctionQueueProto.__detach = function(_func)
 {
   if(_func == null)
@@ -93,14 +128,36 @@ FunctionQueueProto.__detachDispatch = function(_func)
   return true;
 };
 
+/**
+  @fn check if queue is empty
+  @return {Boolean} true if queue is empty else false
+*/  
+FunctionQueueProto._isEmpty = function()
+{
+  return (this.queueDispatchShadow_ || this.queue_).length == 0;
+};
+
+/**
+  @fn check if <_func> in queue
+  @param _func {Function} function to check
+  @return {Boolean} true if <_func> in queue else false
+*/  
 FunctionQueueProto._has = function(_func)
 {
   return (this.queueDispatchShadow_ || this.queue_).indexOf(_func) > -1;
 };
+
+/**
+  @fn exec functions in queue with this = <that> and arguments = <args> until some function return false
+  @param that {Any} this for functions
+  @param args? {Array || Arguments} arguments for functions
+  @throw {Error} if <$jb.FunctionQueue#_apply> or <$jb.FunctionQueue#_apply> called nested
+  @return {Boolean} true if all functions in queue executed else false
+*/  
 FunctionQueueProto._apply = function(that, args)
 {
   if(this.queueDispatchShadow_)
-    throw '$jb.FunctionQueue#_apply nested _apply/_applyAll calls not supported';
+    throw '<$jb.FunctionQueue#_apply> nested _apply/_applyAll calls not supported';
   
   var q = this.queue_, i = q.length;
   
@@ -125,10 +182,18 @@ FunctionQueueProto._apply = function(that, args)
   
   return i < 0;
 };
+
+/**
+  @fn exec functions in queue with this = <that> and arguments = <args>
+  @param that {Any} this for functions
+  @param args? {Array || Arguments} arguments for functions
+  @throw {Error} if <$jb.FunctionQueue#_apply> or <$jb.FunctionQueue#_apply> called nested
+  @return {Boolean} true if all functions in queue executed else false
+*/  
 FunctionQueueProto._applyAll = function(that, args)
 {
   if(this.queueDispatchShadow_)
-    throw '$jb.FunctionQueue#_applyAll nested _apply/_applyAll calls not supported';
+    throw '<$jb.FunctionQueue#_applyAll> nested _apply/_applyAll calls not supported';
 
   var q = this.queue_, i = q.length;
   
@@ -153,6 +218,22 @@ FunctionQueueProto._applyAll = function(that, args)
 
   return true;
 };
+
+/**
+  @fn create anonimous function which make fq._apply(this, arguments) 
+  @return {Function}
+*/  
+FunctionQueueProto._fApply = function()
+{
+  var fq = this;
+  
+  return function()
+  {
+    return fq._apply(this, arguments);
+  };
+};
+
+
 /*  
 FunctionQueueProto._fApplyC = function(that)
 {
@@ -173,15 +254,5 @@ $jb._fFunctionQueueApplyC._fRet=function()
   };
 };
 */
-FunctionQueueProto._fApply = function(that)
-{
-  var fq = this;
-  
-  return function()
-  {
-    return fq._apply(that, arguments);
-  };
-};
-
 
 });

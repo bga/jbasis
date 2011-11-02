@@ -33,270 +33,181 @@
  
   @section DESCRIPTION
   
-  provode 4 functions for for copyng and cloning with or without strict mode
+  provodes 2 functions for for copyng and cloning
 */
 
 $jb.Loader._scope().
 _require("$jb/$G.Object.js").
+_require("$jb/$G.Array.js").
+_require("$jb/$G.Function.js").
 //_require("$jb/ext/number.js").
 _willDeclared("$jb/libcopy.js").
-_completed(function(){
+_completed(function($G, $jb){
 
-$w.jbCopyRule=1;
-$d.jbCopyRule=1;
-$jb.jbCopyRule=1;
-Function.prototype.jbCopyRule=1;
+//var Object = $G.Object;
 
-$jb.__fCopyFunc=function(dispatchFuncName)
+Object.prototype._copyableByRef = function()
 {
-  return function(v)
-  {
-    if(v==null)
-      return v;
-
-    var type=typeof(v);
-    
-    if((type!=="object" && type!=="function") || v.jbCopyRule===1)
-      return v;
-    
-    if(dispatchFuncName in v)
-      return v[dispatchFuncName]();
-    
-    return undefined;
-  };
+  this._copy = this._clone = $jb._this;
 };
 
-$jb._copyStrict=$jb.__fCopyFunc("_copyStrict");
-$jb._copy=$jb.__fCopyFunc("_copy");
-$jb._cloneStrict=$jb.__fCopyFunc("_cloneStrict");
-$jb._clone=$jb.__fCopyFunc("_clone");
+$jb._copy = function(v)
+{
+  switch(typeof(v))
+  {
+    case 'object':
+    case 'function':
+      if(typeof(v._copy) == 'function')
+        return v._copy();
+    default:
+      return v;
+  }
+};
 
-delete $jb.__fCopyFunc;
+$jb._clone = function(v)
+{
+  switch(typeof(v))
+  {
+    case 'object':
+    case 'function':
+      if(typeof(v._clone) == 'function')
+        return v._clone();
+    default:
+      return v;
+  }
+};
 
-String.prototype._copyStrict=
-Number.prototype._copyStrict=
-Boolean.prototype._copyStrict=
-String.prototype._cloneStrict=
-Number.prototype._cloneStrict=
-Boolean.prototype._cloneStrict=
+String.prototype._copy = String.prototype._clone =
+Number.prototype._copy = Number.prototype._clone =
+Boolean.prototype._copy = Boolean.prototype._clone =
+Function.prototype._copy = Function.prototype._clone =
+$G._copy = $G._clone = 
+$jb._copy = $jb._clone = 
 function()
 {
   return this;
 };
 
-Number.prototype._copy=
-Boolean.prototype._copy=
-function()
-{
-  var c=new this.constructor(this);
-  var i=null;
-  
-  for(i in this)
-  {
-    if(this.hasOwnProperty(i))
-      c[i]=this[i];
-  }
-  
-  return c;
-};
-
-Number.prototype._clone=
-Boolean.prototype._clone=
-function()
-{
-  var c=new this.constructor(this);
-  var i=null;
-  var _c=$jb._clone;
-  
-  for(i in this)
-  {
-    if(this.hasOwnProperty(i))
-      c[i]=_c(this[i]);
-  }
-  
-  return c;
-};
-
-if("1".propertyIsEnumerable("0"))
-{
-  String.prototype._copy=
-  function()
-  {
-    var c=new String(this);
-    var i=null;
-    
-    for(i in this)
-    {
-      if(this.hasOwnProperty(i) && !((+i)>=0))
-        c[i]=this[i];
-    }
-    
-    return c;
-  };
-
-  String.prototype._clone=
-  function()
-  {
-    var c=new String(this);
-    var i=null;
-    var _c=$jb._clone;
-    
-    for(i in this)
-    {
-      if(this.hasOwnProperty(i) && !((+i)>=0))
-        c[i]=_c(this[i]);
-    }
-    
-    return c;
-  };
-}
-else
-{
-  String.prototype._copy=Number.prototype._copy;
-  String.prototype._clone=Number.prototype._clone;
-}
-
-
-RegExp.prototype._copyStrict=
-RegExp.prototype._cloneStrict=
+RegExp.prototype._copy = RegExp.prototype._clone =
 function()
 {
   return new RegExp(this);
 };
 
-Date.prototype._copyStrict=
-Date.prototype._cloneStrict=
+Date.prototype._copy = Date.prototype._clone =
 function()
 {
   return new Date(this);
 };
     
-RegExp.prototype._copy=Number.prototype._copy;
-RegExp.prototype._clone=Number.prototype._clone;
-
-Date.prototype._copy=Number.prototype._copy;
-Date.prototype._clone=Number.prototype._clone;
-
-
-Function.prototype._copy=
-Function.prototype._copyStrict=
-function()
-{
-  var _func=(this._copySelf && this._copySelf()) || eval("("+this+")");
-  var i=null;
-  
-  for(i in this)
+Array.prototype._copy = $jb.Optimize._optimize(
   {
-    if(this.hasOwnProperty(i))
-      _func[i]=this[i];
-  }
-
-  _func.prototype=this.prototype;
-  
-  return _func;
-};      
-
-$jb.__fFn=function(_c)
-{
-  return function()
-  {
-    var _func=(this._copySelf && this._copySelf()) || eval("("+this+")");
-    var i=null;
-    var _cC=_c;
-    
-    for(i in this)
+    name: 'Array#_copy',
+    defaultMathodName: 'loop',
+    methodMap:
     {
-      if(this.hasOwnProperty(i))
-        _func[i]=_cC(this[i]);
+      'slice': function()
+      {
+        return this._slice(0);
+      },
+      'concat': function()
+      {
+        return this._concat();
+      },
+      'loop': function()
+      {
+        var i = this.length >>> 0;
+        var a = new Array(i);
+        
+        while(i--)
+          a[i] = this[i];
+          
+        return a;  
+      }
+    },
+    unitMap:
+    {
+      'length': 
+      {
+        _get: function()
+        {
+          return this.length;
+        },
+        _gen: function(n)
+        {
+          var a = new Array(n);
+          
+          while(i--)
+            a[i] = 1;
+          
+          return {'this': a};
+        }
+      }  
     }
-    
-    _func.prototype=this.prototype;
-
-    return _func;
-  };      
-};
-
-Function.prototype._clone=$jb.__fFn($jb._clone);
-Function.prototype._cloneStrict=$jb.__fFn($jb._cloneStrict);
-delete $jb.__fFn;
-
-// http://github.com/jquery/jquery/blob/master/speed/slice.vs.concat.html
-if($w.opera && +$w.opera.version()>=10)
-{
-  Array.prototype._copyStrict=
-  function()
-  {
-    var i=this.length,a=new Array(i);
-    
-    while(i--)
-      a[i]=this[i];
-    
-    return a;
-  };
-}
-else
-{
-  Array.prototype._copyStrict=
-  function()
-  {
-    return this.concat();
-  };
-}
-
-$jb.__fArray=function(_c)
-{
-  return function()
-  {
-    var i=this.length;
-    var a=new Array(len);
-    var _cC=_c;
-    
-    while(i--)
-      a[i]=_cC(this[i]);
-      
-    return a;  
-  };
-};
-Array.prototype._cloneStrict=$jb.__fArray($jb._cloneStrict);
-delete $jb.__fArray;
-
-Object.prototype._copy=
-Object.prototype._copyStrict=
-function()
-{
-  var c=Object.create(this.constructor.prototype);
-  var i=null;
-  
-  for(i in this)
-  {
-    if(this.hasOwnProperty(i))
-      c[i]=this[i];
   }
+);  
+
+Array.prototype._clone = function()
+{
+  var i = this.length >>> 0
+    , a = new Array(len)
+    , v
+  ;
+  
+  while(i--)
+  {
+    switch(typeof(v = this[i]))
+    {
+      case 'object':
+      case 'function':
+        if(typeof(v._clone) == 'function')
+          a[i] = v._clone();
+        break;
+      default:
+        a[i] = v;
+        break;
+    }
+  }  
+    
+  return a;  
+};
+
+Object.prototype._copy = function()
+{
+  var c = Object.create(Object.getPrototypeOf(this));
+  
+  c._extendFrom(this);
       
   return c;
 };
 
-$jb.__fObj=function(_c)
-{
-  return function()
+Object.prototype._clone = $jb._patch(
+  function()
   {
-    var c=Object.create(this.constructor.prototype);
-    var i=null;
-    var _cC=_c;
+    var a = Object.create(Object.getPrototypeOf(this));
+    var v;
     
-    for(i in this)
+    for(var i in this)
     {
       if(this.hasOwnProperty(i))
-        c[i]=_cC(this[i]);
+      {
+        switch(typeof(v = this[i]))
+        {
+          case 'object':
+          case 'function':
+            if(typeof(v._clone) == 'function')
+              a[i] = v._clone();
+            break;
+          default:
+            a[i] = v;
+            break;
+        }
+      }
     }
         
-    return c;
-  };
-};
-
-
-Object.prototype._clone=$jb.__fObj($jb._clone);
-Object.prototype._cloneStrict=$jb.__fObj($jb._cloneStrict);
-delete $jb.__fObj;
+    return a;
+  },
+  [Object._fixDontEnumBug]
+);  
 
 });

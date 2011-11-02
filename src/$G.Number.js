@@ -88,7 +88,7 @@ else
     {
       do
       {
-        c=(b + e)>>1;
+        c=(b + e) >> 1;
         
         if(digits[c].num > value)
           e = c;
@@ -107,7 +107,7 @@ else
     return b;
   }
 
-  Number.prototype._toStringAsRoman=function(digits)
+  Number.prototype._toStringAsRoman = function(digits)
   {
     if(digits == null)
       digits = arguments.callee.sets.upperCase;

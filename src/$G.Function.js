@@ -37,13 +37,172 @@
 */
 
 $jb.Loader._scope().
+//_require('$jb/$jb.Deploy.js').
 _willDeclared("$jb/$G.Function.js").
 _completed(function($G, $jb){
 
 var Function = $G.Function, 
   /** @alias */
   FunctionProto = Function.prototype,
-  eval = $G.eval, setTimeout = $G.setTimeout, setInterval = $G.setInterval;
+  setTimeout = $G.setTimeout, setInterval = $G.setInterval;
+
+$jb._defConst('es:support:Function#apply', (typeof(FunctionProto.apply) == 'function'))
+$jb._defConst(
+  'es:defaultThis', 
+  (function()
+  { 
+    return (this == null) ? 'null' : '$G'; 
+  })()
+);
+  
+$jb._defClass(
+{
+  name: '$jb.FunctionFactory',
+  _constructor: function()
+  {
+  
+  },
+  _create: function(argString, body)
+  {
+    return new Function(argString, body);
+  }
+};  
+  
+$jb._defClass(
+{
+  name: '$jb.ClosuredFunctionFactory',
+  _constructor: function(varMap)
+  {
+    this.varMap_;
+    
+    if(varMap)
+      this._setVarMap(varMap);
+  },
+  _getVarMap: function()
+  {
+    return this.varMap_;
+  },
+  _setVarMap: function(varMap)
+  {
+    var argString = ''
+      , argValues = []
+      , i = 0
+    ;  
+    
+    for(var varName in varMap)
+    {
+      if(varMap.hasOwnProperty(varName))
+      {
+        argString += varName + ',';
+        argValues[i++] = varMap[varName];
+      }
+    }
+    
+    this.varMap_ = varMap;
+    this.argString_ = argString;
+    this.argValues_ = argValues;
+  },
+  _updateVarMap: function()
+  {
+    if(this.varMap_)
+      this._setVarMap(this.varMap_);
+  },
+  _create: function(argString, body)
+  {
+    if(this.argValues_ && this.argValues_.length)
+    {
+      return (new Function(this.argString_, 'return function(' + argNames +  '){' + body + '};')).apply($G, this.argValues_);
+    }
+    else
+    {
+      return new Function(argString, body);
+    }  
+  }
+};  
+
+// wsh and ie6- hasnt Function#apply
+if(!$jb._const('es:support:Function#apply'))
+{
+  (function()
+  {
+    var fnTml = $jb._fnCode(function()
+    {
+      if(that != /*#<*/ defaultThis /*#>*/ /*#eval*/ /*## $jb._const('es:defaultThis') */ /*#evalend*/)
+      {
+        switch(args.length)
+        {
+          case 0: return this.call(that);
+          case 1: return this.call(that, args[0]);
+          case 2: return this.call(that, args[0], args[1]);
+          case 3: return this.call(that, args[0], args[1], args[2]);
+          case 4: return this.call(that, args[0], args[1], args[2], args[3]);
+          case 5: return this.call(that, args[0], args[1], args[2], args[3], args[4]);
+          default:
+            PATCH_WITH_CALL();
+            var t = 'case '.concat(args.length, ': return this.call(that, ');
+            
+            var i = -1, len  = args.length; while(++i < len)
+            {
+              t += 'args[' + i + '],';
+            }
+            
+            t = t.slice(0, -1) + ');';
+
+            var fnCode = '1,' + Function.prototype.apply;
+            
+            fnCode = fnCode.replace('return this.call(that);', 'return this.call(that);\n' + t);
+
+            //console.log(fnCode);
+            
+            Function.prototype.apply = eval(fnCode);
+            
+            return this.apply(that, args);
+        }
+      }
+      else
+      {
+        switch(args.length)
+        {
+          case 0: return this();
+          case 1: return this(args[0]);
+          case 2: return this(args[0], args[1]);
+          case 3: return this(args[0], args[1], args[2]);
+          case 4: return this(args[0], args[1], args[2], args[3]);
+          case 5: return this(args[0], args[1], args[2], args[3], args[4]);
+          default:
+            PATCH_WITHOUT_CALL();
+            var t = 'case '.concat(args.length, ': return this(');
+            
+            var i = -1, len  = args.length; while(++i < len)
+            {
+              t += 'args[' + i + '],';
+            }
+            
+            t = t.slice(0, -1) + ');';
+            
+            var fnCode = '1,' + Function.prototype.apply;
+
+            //console.log(fnCode);
+            
+            fnCode = fnCode.replace('return this();', 'return this();\n' + t);
+            
+            Function.prototype.apply = eval(fnCode);
+            
+            return this.apply(that, args);
+        }
+      }
+    };
+    FunctionProto.apply = function(that, args)
+    {
+    };
+  
+  /*#<*/
+  Function.prototype.apply = eval(
+    ('1,' + Function.prototype.apply).
+      replace('defaultThis', $jb._const('es:defaultThis'))
+  );
+  /*#>*/
+}  
 
 /**
   @fn exec function with 'this'='that' and 'arguments'='args'
@@ -51,7 +210,7 @@ var Function = $G.Function,
   @param args array of arguments || 'arguments' || null
   @return result of execution
 */
-FunctionProto._apply=function(that,args)
+FunctionProto._apply = function(that, args)
 {
   return (args == null || args.length === 0) ? this.call(that) : this.apply(that, args);
 };
@@ -64,25 +223,36 @@ FunctionProto._apply=function(that,args)
 FunctionProto._header = function(code)
 {
   if(code == null)
-    code = "" + this;
+    code = '' + this;
   
-  return code.substring(0, code.indexOf(")") + 1);
+  return code.substring(0, code.indexOf(')') + 1);
 };
+
+$jb._defConst(
+  'es:support:Function#name',
+  (function _fn(){}).name === '_fn'
+);
 
 /**
   @fn get function name. 'function name (a,b,c)'
   @param code function code. Optional
   @return name string
 */
-FunctionProto._name = function(code)
-{
-  if(code == null)
-    code = "" + this;
-  
-  code = code.substring(code.indexOf("function") + 8, code.indexOf("("));
-  
-  return code;//._trim();
-};
+FunctionProto._name = $jb._const('es:support:Function#name')
+  ? function(code)
+  {
+    return this.name
+  }
+  : function(code)
+  {
+    if(code == null)
+      code = '' + this;
+    
+    code = code.substring(code.indexOf('function') + 8, code.indexOf('('));
+    
+    return code;//._trim();
+  }
+;
 
 /**
   @fn get function argument names string. 'a,b,c' in 'function name (a,b,c)'
@@ -106,7 +276,7 @@ FunctionProto._argNames = function(code)
 {
   code = this._argNamesString(code);
   
-  return (code.length !== 0) ? code.split(",") : new Array();
+  return (code.length !== 0) ? code.split(",") : [];
 };
 
 /**
@@ -117,7 +287,7 @@ FunctionProto._argNames = function(code)
 FunctionProto._body = function(code)
 {
   if(code == null)
-    code=""+this;
+    code = String(this);
   
   return code.substring(code.indexOf("{"));
 };
@@ -128,8 +298,8 @@ FunctionProto._isNative = function()
 };
 
 /**
-  @fn template function. do nothing. return 'this'
-  @return 'this'
+  @fn template function. do nothing. return <this>
+  @return <this>
 */
 $jb._this = function()
 {
@@ -138,7 +308,7 @@ $jb._this = function()
 
 /**
   @fn template function. do nothing. return first argument
-  @return 'arguments[0]'
+  @return <arguments[0]>
 */
 $jb._self = function(v)
 {
@@ -163,8 +333,8 @@ $jb._true = function()
 };
 
 /**
-  @fn template function. do nothing. return 'false'
-  @return 'false'
+  @fn template function. do nothing. return <false>
+  @return <false>
 */
 $jb._false = function()
 {
@@ -172,23 +342,26 @@ $jb._false = function()
 };
 
 /**
-  @fn template function. do nothing. return '""'
-  @return '""'
+  @fn template function. do nothing. return <''>
+  @return <''>
 */
 $jb._emptyString = function()
 {
   return "";
 };
 
-(function()
-{
-  var _fn = function _self()
+$jb._defConst(
+  'es:bug:wrongInternalSelfInNamedFunction', 
+  (function()
   {
-    Function.canFastSelf = (_fn === _self);
-  };
-  
-  _fn();
-})();
+    var _fn = function _self()
+    {
+      return (_fn !== _self);
+    };
+    
+    return _fn();
+  })()
+)
 
 /**
   @fn create copyable function that return 'c'
@@ -206,17 +379,7 @@ $jb._fConstC = function(c)
   return _ret;
 };
 
-if(Function.canFastSelf)
-{
-  $jb._fConstC.__fRet = function()
-  {
-    return function _self()
-    {
-      return _self.c;
-    };
-  };
-}
-else
+if($jb._const('es:bug:wrongInternalSelfInNamedFunction'))
 {
   $jb._fConstC.__fRet = function()
   {
@@ -226,6 +389,16 @@ else
     };
     
     return _self;
+  };
+}
+else
+{
+  $jb._fConstC.__fRet = function()
+  {
+    return function _self()
+    {
+      return _self.c;
+    };
   };
 }
 
@@ -262,17 +435,7 @@ FunctionProto._fBindC = function(that, args)
   return _ret;
 };
 
-if(Function.canFastSelf)
-{
-  FunctionProto._fBindC.__fRet = function()
-  {
-    return function _self()
-    {
-      return _self._fn.apply(_self.that || this, _self.args || arguments);
-    };
-  };
-}
-else
+if($jb._const('es:bug:wrongInternalSelfInNamedFunction'))
 {
   FunctionProto._fBindC.__fRet = function()
   {
@@ -284,6 +447,18 @@ else
     return _self;
   };
 }
+else
+{
+  FunctionProto._fBindC.__fRet = function()
+  {
+    return function _self()
+    {
+      return _self._fn.apply(_self.that || this, _self.args || arguments);
+    };
+  };
+}
+
+$jb._defConst('es:support:Function#bind', typeof(Function.prototype.bind) == 'function' && Function.prototype.bind._isNative());
 
 /**
   @fn create function that return target function exec with 'this'='that' || 'function.this' and 'arguments'='args' || 'function.arguments'
@@ -291,7 +466,7 @@ else
   @param args array of arguments or null
   @return function 
 */
-if(FunctionProto.bind && FunctionProto.bind._isNative())
+if($jb._const('es:support:Function#bind'))
 {
   (function(){
     var _bind  = FunctionProto.bind;
@@ -454,30 +629,6 @@ FunctionProto._fWrap = function(_wrapper)
 };
 
 /**
-  @fn create object by array of classes eg 'new classes[2](new classes[1](new classes[0]))'
-  @param classes array of constructors
-  @return result object 
-*/
-$jb._new = function(classes)
-{
-  var len = classes.length;
-  
-  if(len === 0)
-    return null;
-  
-  if(len === 1)
-    return new classes[0]();
-    
-  var i = len;
-  var obj = new classes[--i]();
-  
-  while(i--)
-    obj = new classes[i]($jb._fConst(obj));
-  
-  return obj;
-};
-
-/**
   @fn (defer, delay, exec after) target function execution after 'time' ms but after current function execution
   @param time time to delay. Optional. Default 0
   @return numeric id for pass to $w.clearTimeout to prevent execution
@@ -509,7 +660,7 @@ FunctionProto._period = function(time)
 */
 $jb._funcEval = function(str, that, args)
 {
-  return (new Function("", str))._apply(that, args);
+  return (new Function('', str))._apply(that, args);
 };
 
 /**
@@ -528,7 +679,7 @@ $jb._funcEvalSafe = function(str, that, args)
   
   try
   {
-    ret=(new Function("", str))._apply(that, args);
+    ret=(new Function('', str))._apply(that, args);
   }
   catch(err)
   {
@@ -540,18 +691,9 @@ $jb._funcEvalSafe = function(str, that, args)
 };
 
 /**
-  @fn function constructor
-  @param str string to eval
-  @return function that eval 'str'
-*/
-$jb._fEval = function(str)
-{
-  return function()
-  {
-    return eval(str);
-  };
-};
-
+  @fn hide <this> source code and return 'function(){ [native code] }' instead.
+  @return {Function} this
+*/  
 Function.prototype._makeLikeNative = function()
 {
   if(Object.defineProperty)
@@ -566,7 +708,7 @@ Function.prototype._makeLikeNative = function()
 
     Function.prototype._makeLikeNative = function()
     {
-      Object.defineProperty(this, 'isSourceHided', blackLabelProp);
+      Object.defineProperty(this, 'jbIsSourceHided_', blackLabelProp);
     };
 
     var _oldFnToString = Function.prototype.toString;
@@ -577,7 +719,7 @@ Function.prototype._makeLikeNative = function()
         writable: false,
         value: function()
         {
-          if(this.isSourceHided === true)
+          if(this.jbIsSourceHided_ === true)
             return 'function () { [native code] }';
             
           return _oldFnToString.call(this);  
@@ -606,6 +748,121 @@ Function.prototype._makeLikeNative = function()
   Function.prototype._makeLikeNative._makeLikeNative();
   
   this._makeLikeNative();
+  
+  return this;
+};
+
+/**
+  @fn call function with <this> = <that> and <arguments> matched from <argMap> by names
+  @param that {Any} <this> for function call
+  @param argMap {Object(
+    {String} argument name ->
+    {Any} argument value
+  )}
+  @example
+    var _fn = function(a, b, c)
+    {
+      console.log('a = ', a, 'b = ', b, 'ñ = ', c); 
+    };
+
+    _fn._namedApply(null, {b: 1}); // a =  undefined b =  1 ñ =  undefined
+    _fn._namedApply(null, {b: 1, a: 0}); // a =  0 b =  1 ñ =  undefined
+    _fn._namedApply.call(1, 1, {}); // TypeError: first argument must be function
+    _fn._namedApply(null, 1); // TypeError: 3rd argument must not null
+    _fn._namedApply(null, {b: 1, a: 0, d: 3}); // SyntaxError: function hasnt argument "d"
+  
+    var _fn2 = function(){};
+    _fn2._namedApply(null, {b: 1, a: 0, d: 3}); // SyntaxError: function hasnt named arguments
+  @return result of function call
+*/
+Function.prototype._namedApply = function(that, argMap)
+{
+  var _fn = this;
+  
+  if(typeof(_fn) != 'function')
+    throw new TypeError('<this> must be function');
+
+  if(argMap == null)
+    throw new TypeError('3rd argument must not null');
+    
+  var argToPosMap = _fn.jbArgToPosMap_;
+  
+  if(argToPosMap == null)
+  {
+    var fnCode = '' + _fn;
+    
+    var argString = fnCode.slice(fnCode.indexOf('(') + 1, fnCode.lastIndexOf(')', fnCode.indexOf('{'))). // get arguments string
+      replace(/\/\*[\s\S]*?\*\//g, ''). // and strip comments
+      replace(/\/\/[\s\S]*?\n/g, '').
+      /*#if $jb._const('es:support:String#trim') */
+      /*## trim() */
+      /*#else*/
+      replace(/^\s+|\s+$/g, '')
+      /*#endif*/
+      ;
+      
+    argToPosMap = _fn.jbArgToPosMap_ = {};
+
+    if(argString)
+    {
+      var argNames = argString.split(/\s*,\s*/);
+      
+      var i = -1, len = argNames.length; while(++i < len)
+        argToPosMap[argNames[i]] = i;
+    }
+    else
+    {
+      _fn.jbHasntArguments_ = true;
+    }
+  }
+  
+  if(_fn.jbHasntArguments_)
+  {
+    /*#if $jb._const('es:support:Object#__count__') */
+    /*## if(argMap.__count__) throw new SyntaxError('function hasnt named arguments'); */
+    /*#else*/
+    for(var name in argMap)
+    {
+      if(argMap.hasOwnProperty(name))
+        throw new SyntaxError('function hasnt named arguments')
+    }
+    /*#endif*/
+  }
+  else
+  {
+    var argValues = [];
+    
+    for(var name in argMap)
+    {
+      if(argMap.hasOwnProperty(name))
+      {  
+        var pos = argToPosMap[name];
+
+        if(pos == null)
+          throw new SyntaxError('function hasnt argument "' + name + '"')
+        
+        argValues[pos] = argMap[name];
+      }
+    }
+    
+    return _fn.apply(that, argValues);
+  }
+};
+
+// known issues:
+// 1) not cross frame (_fn.toString === Function.prototype.toString)  
+$jb._isFunction = function(_fn)
+{
+  return typeof(_fn) == 'function' || 
+    (
+      typeof(_fn) != 'string' && 
+      !(_fn instanceof String) &&
+      String(_fn).replace(/^\s+/, '').slice(0, 8) == 'function' &&
+      (
+        !('toString' in _fn) ||
+        _fn.toString === Function.prototype.toString
+      )
+    );
 };
 
 });

@@ -181,6 +181,14 @@ if(!('FileError' in $G))
   $G.FileError.ENCODING_ERR	= 26;	// The file data cannot be accurately represented in a data URL.
 }
 
+$G.HTTPError = function(httpCode)
+{
+  this.httpCode = httpCode;
+};
+
+$G.HTTPError.prototype = new Error();
+$G.HTTPError.prototype.constructor = $G.HTTPError;
+
 /*
 if(!('FileException' in $G))
 {

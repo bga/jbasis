@@ -34,28 +34,32 @@
   @section DESCRIPTION
 */
 
-$jb.Loader._scope().
+this.$jb._defConst('host:support:ActiveXObject', ('ActiveXObject' in this));
+this.$jb._defConst('host:support:XMLHttpRequest', ('XMLHttpRequest' in this));
+this.$jb._defConst('host:support:XDomainRequest', ('XDomainRequest' in this));
+
+this.$jb.Loader._scope().
 _require('$jb/$G.Function.js').
 _require('$jb/OOP.js').
 _require('$jb/exceptions.js').
 _require('$jb/$jb.Net.Base.js').
-_requireIf('$jb/ieXHR.js', $w.XMLHttpRequest == null). // for ie 5.5-6.0 alse requred 'iexhr.js'
-_requireIf('$jb/ieXDRToXHR.js', ('XDomainRequest' in $w)). // XDomainRequest IE support
-_willDeclared('$jb/$jb.Net.XHR.js').
+_requireIf('$jb/ieXHR.js', this.XMLHttpRequest == null). // for ie 5.5-6.0 alse requred 'iexhr.js'
+_requireIf('$jb/ieXDRToXHR.js', ('XDomainRequest' in this)). // XDomainRequest IE support
+_willDeclared('$jb/$jb.Net.HTTPClient.js').
 _completed(function($G, $jb){
 
 
-if($w.XMLHttpRequest==null)
+if($G.XMLHttpRequest == null)
   return;
 
 if($jb.Net == null)
   $jb.Net = {};
 
-$jb.Net.XHR = function()
+$jb.Net.HTTPClient = function()
 {
   $jb.Net.Base.call(this);
   
-  this.xhr_=new $w.XMLHttpRequest();
+  this.xhr_ = new $G.XMLHttpRequest();
 
   this.url = null;
   this.method = null;
@@ -71,10 +75,10 @@ $jb.Net.XHR = function()
   this.__stateChangedReal = this.__stateChangedReal._fBind(this);
 };
 
-$jb.Net.XHR._staticDeriveFrom($jb.Net.Base);
+$jb.Net.HTTPClient._staticDeriveFrom($jb.Net.Base);
 
 /** @alias */
-var XHRProto = $jb.Net.XHR.prototype;
+var XHRProto = $jb.Net.HTTPClient.prototype;
  
 XHRProto._acceptStatus = function(status)
 {

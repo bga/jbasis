@@ -45,8 +45,6 @@ if($jb.Url == null)
 
 var Url = $jb.Url;  
 
-Url.slash = '/';
-
 var __declareBeginBased = function(name)
 {
   var index = '_' + name + 'Index',
@@ -121,7 +119,7 @@ Url._extEndIndex = function(s)
 };
 Url.__extIndex = function(s, end)
 {
-  return Math.min(s.indexOf('.', s.lastIndexOf(Url.slash, end) + 1) >>> 0, end);
+  return Math.min(s.indexOf('.', s.lastIndexOf('/', end) + 1) >>> 0, end);
 };
 
 __declareEndBased('ext');
@@ -130,21 +128,21 @@ Url._nameEndIndex = function(s, begin)
 {
   var p = Url._extEndIndex(s);
   
-  return ~(~s.indexOf('.', s.lastIndexOf(Url.slash, p) + 1) || ~p);
+  return ~(~s.indexOf('.', s.lastIndexOf('/', p) + 1) || ~p);
 };
 Url._nameIndex = function(s)
 {
-  return s.lastIndexOf(Url.slash, Url._extEndIndex(s)) + 1;
+  return s.lastIndexOf('/', Url._extEndIndex(s)) + 1;
 };
 Url._name = function(s)
 {
-  var p = Url._extEndIndex(s), q = s.lastIndexOf(Url.slash, p) + 1;
+  var p = Url._extEndIndex(s), q = s.lastIndexOf('/', p) + 1;
   
   return s.substring(q, ~(~s.indexOf('.', q) || ~p));
 };
 Url._nameLength = function(s)
 {
-  var p = Url._extEndIndex(s), q = s.lastIndexOf(Url.slash, p) + 1;
+  var p = Url._extEndIndex(s), q = s.lastIndexOf('/', p) + 1;
   
   return ~(~s.indexOf('.', q) || ~p) - q;
 };
@@ -154,13 +152,13 @@ Url._pathIndex = function(s)
 {
   var i = s.indexOf('://');
   
-  return (i + 1) && ~(~s.indexOf(Url.slash, i + 3) || ~s.length);
+  return (i + 1) && ~(~s.indexOf('/', i + 3) || ~s.length);
 };
 Url._pathEndIndex = function(s)
 {
   var p;
   
-  return (s.lastIndexOf(Url.slash, 
+  return (s.lastIndexOf('/', 
       (p = ~(~s.lastIndexOf('?', s.lastIndexOf('#') >>> 0) || ~s.length))
     ) + 1) || p; 
 };
@@ -181,7 +179,7 @@ Url.__portEndIndex = function(s, begin)
 {
   var i;
   
-  return (begin > 0 && s.charAt(begin) == ':' && (i = s.indexOf(Url.slash, begin)) > -1) ? i : begin;
+  return (begin > 0 && s.charAt(begin) == ':' && (i = s.indexOf('/', begin)) > -1) ? i : begin;
 };
 __declareBeginBased('port');
 
@@ -191,7 +189,7 @@ Url._domainIndex = function(s)
 };
 Url.__domainEndIndex = function(s, begin)
 {
-  return ~(~s.indexOf(':', begin) || ~s.indexOf(Url.slash, begin) || ~begin);
+  return ~(~s.indexOf(':', begin) || ~s.indexOf('/', begin) || ~begin);
 };
 __declareBeginBased('domain');
 
@@ -207,5 +205,89 @@ Url._protocolIndex = function(s)
 };
 __declareBeginBased('protocol');
 
+Url._winToUnix = function(s)
+{
+  return s.replace(/\\/g, '/');
+};
+Url._unixToWin = function(s)
+{
+  return s.replace(/\//g, '\\');
+};
+
+Url._normalizePath = function(s)
+{
+  s = s.replace(/\/(?:\.\/)+/g, '');
+  
+  var nb, b, c, e = 0;
+  
+  while((c = s.indexOf('/../', e)) > -1)
+  {
+    b = e = c;
+
+    do
+    {
+      e += 4;
+      b = nb;
+      nb = s.lastIndexOf('/', b - 1);
+    }  
+    while(nb > -1 && s.substr(e, 4) == '/../');
+    
+    s = s.substr(0, b) + s.slice(e - 1);
+  }
+  
+  return s;
+};
+
+Url._full = function(url, protocol, domainAndPort, path)
+{
+  if(url.substr(0, 2) == '//')
+  {
+    url = protocol + url;
+  }
+  else if(url.substr(0, protocol.length) != protocol)
+  {  
+    var prefix = protocol + '//' + domainAndPort;
+  
+    if(url.charAt(0) != '/')
+      prefix += path;
+  
+    url = prefix + url;
+  }
+  
+  return url;
+};
+
+
+/**
+  @fn
+  @example
+    b       s          Url._relativePath(b, s)
+    /       /a/     -> a/
+    /a/     /       -> ../ 
+    /a/     /a/b/   -> b/
+    /a/b/   /a/     -> ../
+    /a/b/c/ /a/     -> ../../
+    /a/b/c/ /a/d/   -> ../../d/
+    /a/d/   /a/b/c/ -> ../b/c/
+*/    
+Url._relativePath = function(b, s)
+{
+  var m = (b.length < s.length) ? b : s; 
+  
+  var op, p = 0;
+
+  while((p = m.indexOf('/', (op = p + 1))) > -1 && b.slice(op, p) == s.slice(op, p))
+    ;
+    
+  var r = '';
+  
+  if(p > -1)
+  {  
+    while((p = b.indexOf('/', p + 1)) > -1)
+      r += '../';
+  }  
+  
+  return r + s.slice(op);
+};
 
 });

@@ -35,237 +35,279 @@
 
 $jb.Loader._scope().
 //_require("$jb/$G.Function.js").
-_require("$jb/$G.String.js"). // ._escapeForRegExpReplace .trim ._optimizeCharsAccess
+_require("$jb/$G.String.js"). // ._escapeForRegExp _escapeForRegExpReplace .trim .trimLeft .trimRight
 //_require("$jb/$G.Number.js"). // ._fixupIntToUIntBug
 _require("$jb/$jb.JSParser.js"). // ._fMatchExpr
 _willDeclared("$jb/$jb.Preprocessor.js").
 _completed(function($G, $jb){
 
-var RegExp = $G.RegExp, Math = $G.Math;
+var argsSplitRE = /,\s*/;
 
-$jb.Preprocessor = function()
+$jb._namespace('$jb.Preprocessor');
+
+$jb._defClass(
 {
-  this.definesMap = {'default': []};
-  //this.isDefinesChanged = false;
-};
-
-/** @alias */
-var PreprocessorProto = $jb.Preprocessor.prototype;
-
-var argsSplitRE = /,\s*/,
-  defaultGroupNames = ['default'];
-
-PreprocessorProto.__defConst = function(name, expr, group)
-{
-  group.push
-  (
-    { 
-      name: name,
-      match: new RegExp(name._escapeForRegExpReplace(), 'g'),
-      expr: expr
-    }
-  );
-};
-PreprocessorProto.__defFn = function(name, indexes, argMatches, expr, group)
-{
-  group.push
-  (
-    {
-      name: name,
-      indexes: indexes,
-      argMatches: argMatches,
-      expr: expr
-    }
-  );
-};
-
-(function()
-{
-  var argsL;
-  var _cmp = function(a, b)
-  {
-    return argsL[b].length - argsL[a].length;
-  };
+  name: '$jb.Preprocessor.Macros',
   
-  PreprocessorProto.__argsToIndexes = function(args)
+  _constructor: function(signature, expr)
   {
-    var i = args.length,
-      indexes = new Array(i);
+    if(signature != null)
+    {
+      this._setSignature(signature);
+    }
+    else
+    {
+      this.name_ = null;
+      this.match_ = null;
+      this.indexes_ = null;
+    }
     
-    argsL = args;
+    if(expr != null)
+      this._setExpr(expr);
+    else  
+      this.expr_ = null;
+  },
+  
+  _getMacrosType: function()
+  {
+    if(this.args_ != null)
+    {
+      if(typeof(this.expr_) == 'function')
+        return $jb.Preprocessor.Macros.MacrosType.NATIVE_FN;
+      else
+        return $jb.Preprocessor.Macros.MacrosType.TEXT_FN;
+    }
+    else
+    {
+      return $jb.Preprocessor.Macros.MacrosType.TEXT_REPLACE;
+    }
+    
+    return $jb.Preprocessor.Macros.MacrosType.UNKNOWN;
+  },
+
+  _copy: function()
+  {
+    var m = new $jb.Preprocessor.Macros();
+    
+    m.signature_ = this.signature_;
+    m.name_ = this.name_;
+    m.match_ = this.match_;
+    m.args_ = this.args_ && this.args_.slice(0);
+    m.indexes_ = this.indexes_ && this.indexes_.slice(0);
+
+    return m;
+  },
+
+  _clone: function()
+  {
+    var m = new $jb.Preprocessor.Macros();
+    
+    m.signature_ = this.signature_;
+    m.name_ = this.name_;
+    m.match_ = this.match_;
+    m.args_ = this.args_ && this.args_.slice(0);
+    m.indexes_ = this.indexes_ && this.indexes_.slice(0);
+
+    return m;
+  },
+  
+  __argsToIndexes: function(args)
+  {
+    var i = args.length
+      , indexes = new Array.U32(i);
     
     while(i--)
       indexes[i] = i;
     
-    indexes.sort(_cmp);
+    indexes.sort(function(a, b){ return args[b].length - args[a].length; });
     
     //console.log(args);
     //console.log(indexes);
     return indexes;
-  };
-})();  
+  },
 
-PreprocessorProto.__argsToArgMatches = function(args)
-{
-  var i = args.length;
-  
-  while(i--)
-    args[i] = new RegExp(args[i]._escapeForRegExpReplace(), 'g');
-  
-  return args;
-};
-
-PreprocessorProto._define = function(name, expr, groupNames)
-{
-  if(groupNames == null)
-    groupNames = defaultGroupNames;
-  else if(groupNames.length < 1)
-    return this;
-    
-  var i, definesMap = this.definesMap;
-  
-  if((i = name.indexOf('(')) < 0)
-  {  
-    var j = groupNames.length; while(j--)
-      this.__defConst(name, expr, definesMap[groupNames[j]] || (definesMap[groupNames[j]] = []));
-  }
-  else
+  __argsToArgMatches: function(args)
   {
-    var args = name.slice(i + 1, -1).trim().split(argsSplitRE), 
-      indexes = this.__argsToIndexes(args);
-      
-    this.__argsToArgMatches(args);
-    name = name.slice(0, i);
+    var i = args.length;
     
-    var j = groupNames.length - 1;
+    while(i--)
+      args[i] = new RegExp(args[i]._escapeForRegExp(), 'g');
     
-    this.__defFn(name, indexes, args, expr, definesMap[groupNames[j]] || (definesMap[groupNames[j]] = []));
-
-    while(j--)
-      this.__defFn(name, indexes.slice(0), args.slice(0), expr, definesMap[groupNames[j]] || (definesMap[groupNames[j]] = []));
-  }
+    return args;
+  },
   
-  j = groupNames.length; while(j--)
-    definesMap[groupNames[j]].isDefinesChanged = true;
-
-  return this;
-};
-
-PreprocessorProto._defConst = function(name, expr, groupNames)
-{
-  if(groupNames == null)
-    groupNames = defaultGroupNames;
-  else if(groupNames.length < 1)
-    return this;
-    
-  var definesMap = this.definesMap;
-  
-  var j = groupNames.length; while(j--)
-    this.__defConst(name, expr, definesMap[groupNames[j]]);
-  
-  j = groupNames.length; while(j--)
-    definesMap[groupNames[j]].isDefinesChanged = true;
-
-  return this;
-};
-PreprocessorProto._defFn = function(name, args, expr, groupNames)
-{
-  if(groupNames == null)
-    groupNames = defaultGroupNames;
-  else if(groupNames.length < 1)
-    return this;
-    
-  var definesMap = this.definesMap;
-  
-  var args = name.slice(i + 1, -1).trim().split(argsSplitRE), 
-    indexes = this.__argsToIndexes(args);
-    
-  this.__argsToArgMatches(args);
-  name = name.slice(0, i);
-  
-  var j = groupNames.length - 1;
-  
-  this.__defFn(name, indexes, args, expr, definesMap[groupNames[j]]);
-
-  while(j--)
-    this.__defFn(name, indexes.slice(0), args.slice(0), expr, definesMap[groupNames[j]]);
-  
-  var j = groupNames.length; while(j--)
-    definesMap[groupNames[j]].isDefinesChanged = true;
-
-  return this;
-};
-
-PreprocessorProto._undef = function(name, groupNames)
-{
-  if(groupNames == null)
-    groupNames = defaultGroupNames;
-  else if(groupNames.length < 1)
-    return this;
-
-  var definesMap = this.definesMap, ds;
-  
-  var j = groupNames.length; while(j--)
+  _setSignature: function(signature)
   {
-    if((ds = definesMap[j]) && ds.length)
+    var i = signature.indexOf('(');
+    
+    this.signature_ = signature;
+
+    if(i < 0)
+    {  
+      this.name_ = signature;
+      this.nameRE_ = new RegExp(signature._escapeForRegExp(), 'g');
+      this.args_ = null;
+      this.indexes_ = null;
+    }
+    else
     {
-      var dsI = -1, d;
-      
-      while((d = ds[++dsI]) && d.name != name)
-        ;
+      var args = signature.slice(i + 1, signature.lastIndexOf(')')).trim().split(argsSplitRE) 
+        , indexes = this.__argsToIndexes(args);
         
-      if(d)
-        ds.splice(dsI, 1);
-    }    
+      this.__argsToArgMatches(args);
+      
+      this.name_ = signature.slice(0, i);
+      this.args_ = args;
+      this.indexes_ = indexes;
+    }
+  },
+
+  _getSignature: function()
+  {
+    return this.signature_;
+  },
+  
+  _getName: function()
+  {
+    return this.name_;
+  },
+  
+  _setExpr: function(expr)
+  {
+    this.expr_ = expr;
+  },
+  
+  _getExpr: function()
+  {
+    return this.expr_;
   }
-};
+}); // class $jb.Preprocessor.Macros  
 
-
-PreprocessorProto.__matchArg = $jb.JSParser._fMatchExpr([',']);
-
-/*
-(function()
+$jb._defEnum('$jb.Preprocessor.Macros.MacrosType',
 {
-  var a, b = a = (a  = '' + PreprocessorProto.__matchArg).
-    slice(a.indexOf('{') + 1, a.lastIndexOf('}') - 1);
+  UNKNOWN: 0,  
+  TEXT_REPLACE: 1,  
+  TEXT_FN: 2,  
+  NATIVE_FN: 3
+});  
 
-  a = String._optimizeCharsAccess(a);
-  a = Number._fixupIntToUIntBug(a);
 
-  if(a != b)  
-    PreprocessorProto.__matchArg = new Function('s, p', a);
-})();
-*/
-(function()
+$jb._defClass(
 {
-  var _cmp = function(a, b)
-  {
-    return b.name.length - a.name.length;
-  };
+  name: '$jb.Preprocessor.MacrosGroup',
   
-  PreprocessorProto.__sortDefines = function(groups)
+  _constructor: function()
   {
-    var _cmpC = _cmp;
-    
-    var i = -1, group; while((group = groups[++i]))
+    this.macroses = [];
+  },
+  
+  __lookupMacrosByName: function(name)
+  {
+    var ms = this.macroses, msI = -1, m;
+      
+    while((m = ms[++msI]))
     {
-      if(group.isDefinesChanged)
-        group.sort(_cmpC).isDefinesChanged = false;
+      if(m._getName() == name)
+        break;
+    }  
+      
+    return (m) ? i : -1; 
+  },
+  
+  _sortMacrosesByName: function()
+  {
+    this.macroses.sort(function(a, b){ return 2*(b._getName() > a._getName()) - 1; });
+  },
+
+  _sortMacrosesByNameLength: function()
+  {
+    this.macroses.sort(function(a, b){ return b._getName().length - a._getName().length; });
+  },
+
+  _def: function(signatureArg, exprArg)
+  {
+    var name;
+    
+    if(signatureArg instanceof $jb.Preprocessor.Macros)
+      name = signatureArg._getName();
+    else
+      name = signatureArg.slice(0, signatureArg.indexOf('(') >>> 0);
+    
+    if(this.__lookupMacrosByName(name) < 0)
+    {  
+      var macros;
+      
+      if(signatureArg instanceof $jb.Preprocessor.Macros)
+        macros = signatureArg;
+      else
+        macros = new $jb.Preprocessor.Macros(signatureArg, exprArg);
+      
+      this.macroses.push(macros);
     }
     
-    /*
-    var definesName, definesMap = this.definesMap;
+    return this;
+  },
+
+  _import: function(mg)
+  {
+    var extraMacroses = mg.macroses, i = extraMacroses.length;
+    var macroses = this.macroses, j = macroses.length;
     
-    for(definesName in definesMap)
-    {
-      if(definesMap.hasOwnProperty(definesName) && definesMap[definesName].isDefinesChanged)
-        definesMap[definesName].sort(_cmpC).isDefinesChanged = false;
-    }
-    */
+    while(i--)
+      macroses[j++] = extraMacroses[i];
+    
+    this.macroses.sort(function(a, b){ return 2*(b._getName() > a._getName()) - 1; });
+    this.macroses._sub()._uniqueSelf(function(a, b){ return b._getName() != a._getName(); });
+    
+    return this;
   };
-})();
   
-PreprocessorProto.__pass = function(s, groupNames, evalObj)
+  _undef: function(name)
+  {
+    name = name.slice(0, name.indexOf('(') >>> 0);
+    
+    var i = this.__lookupMacrosByName(name); 
+
+    if(i > -1)
+      this.macroses.splice(i, 1);
+  },
+  
+  _copy: function()
+  {
+    var mg = new $jb.Preprocessor.MacrosGroup();
+    
+    mg.macroses = this.macroses.slice(0);
+  
+    return mg;
+  },
+
+  _clone: function()
+  {
+    var mg = new $jb.Preprocessor.MacrosGroup();
+    var macroses = this.macroses, i = macroses.length;
+    var newMacroses = new Array(i);
+    
+    while(i--)
+      newMacroses[i] = macroses[i]._cloneStrict();
+    
+    mg.macroses = this.macroses.slice(0);
+  
+    return mg;
+  }
+}; // class $jb.Preprocessor.MacrosGroup  
+
+$jb._defEnum(
+  '$jb.Preprocessor.MacrosGroup.MacrosesSortOrder',
+  {
+    UNKNOWN: 0,
+    BY_NAME: 1,
+    BY_NAME_LENGTH: 2
+  }
+);  
+
+var _matchArg = $jb.JSParser._fMatchExpr([',']);
+
+$jb.Preprocessor._pass = function(s, mgs)
 {
   var dsm = this.definesMap,
     groups = [], groupsI,
@@ -275,9 +317,7 @@ PreprocessorProto.__pass = function(s, groupNames, evalObj)
     __matchArgC = this.__matchArg
     ;
     
-  if(groupNames == null)
-    groupNames = defaultGroupNames;
-  else if(groupNames.length < 1)
+  if(groups.length < 1)
     return this;
   
   groupsI = -1;
@@ -332,7 +372,7 @@ PreprocessorProto.__pass = function(s, groupNames, evalObj)
               
             if(typeof(expr) == 'function')
             {
-              out += expr.apply(evalObj, exprs);
+              out += expr.apply(this, exprs);
             }  
             else
             {
@@ -374,51 +414,113 @@ PreprocessorProto.__pass = function(s, groupNames, evalObj)
   while(d);
   
   return s;
-  
-  /*
-  // __EVAL__
-  var i = -1, out = '',
-    _eval = this._eval
-    ;
-  
-  while((p  = s.indexOf('__EVAL__(', (op = ++i))) > -1 && (i = __matchArgC(s, (p + 9))) != 4294967295)
-  {
-    out += s.slice(op, p);
-    
-    switch(s.charAt((p += 9)))
-    {
-      case '"':
-      case '\'':
-        //$G._log(s.slice(p + 1, i - 1));
-        out += _eval(s.slice(p + 1, i - 1));
-        break;
-      default:
-        //$G._log(s.slice(p , i ));
-        out += _eval(s.slice(p, i));
-        break;
-    }
-  }
-  
-  s = out + s.slice(op);
-  
-  //console.log('end');
-  
-  return s;
-  */
 };
 
-PreprocessorProto._pass = PreprocessorProto.__pass;
-
-
-$jb._preprocessingTextBegin = function(_fn)
+(function()
 {
-  return {
-    _preprocessingTextEnd: function()
-    {
-      var t = '' + _fn;
+  var p = new $jb.Preprocessor();
+  
+  // concat ie A_$$B_$$_C(D_)
+  p._define('$$', '', ['common']); 
+  
+  // unwrap CString ie A_$$_C_TEXT('+')$$_B -> A_ + B_
+  // usefull for pass non valid expr to macroses ie _A(_C_TEXT('++'))
+  p._define(
+    '_C_TEXT(A_)', 
+    function(a)
+    { 
+      var b;
       
-      return t.slice(t.indexOf('{') + 1, -1).trim();
-    }
-  };
-}
+      switch((b = a.trimLeft()).charAt(0))
+      {
+        case '"':
+        case '\'':
+          return b.trimRight().slice(1, -1)._unescapeCString();
+        default:
+          return a;
+      }
+    }, 
+    ['common']
+  );
+
+  // unwrap function code from function, analog of $jb._fnCode
+  // _C_FN_CODE(function(){ a++; }) -> a++;
+  /*
+    _C_IF(
+      A_ > 5,
+      _C_FN_CODE(function(){
+        _a();
+        ++b;
+      }),
+      _C_FN_CODE(function(){
+        _c();
+        --f;
+        d = 4;
+      })
+    )
+  */
+  p._define(
+    '_C_FN_CODE(FN_)', 
+    function(fn)
+    { 
+      fn = fn.trim();
+      
+      return fn.slice(fn.indexOf('{') + 1, fn.lastIndexOf('}'));
+    }, 
+    ['common']
+  );
+  
+  // simple conditional macros 
+  // _C_IF(A_ > 0, B_, C_)
+  p._define(
+    '_C_IF(COND_, IF_TRUE_, IF_FALSE_)', 
+    function(cond, ifTrue, ifFalse)
+    { 
+      if((new Function('return ('.concat(cond, ')')))())
+        return ifTrue;
+      else
+        return ifFalse
+    }, 
+    ['common']
+  );
+  
+  // simple evalute expr and return result 
+  // _C_EVAL(A_ + B_ + 1)
+  p._define(
+    '_C_EVAL(EXPR_)', 
+    function(expr)
+    { 
+      return (new Function('return ('.concat(expr, ')')))()
+    }, 
+    ['common']
+  );
+
+  // trim expr 
+  // _C_TRIM(  A_   ) -> A_
+  p._define(
+    '_C_TRIM(A_)', 
+    function(a)
+    { 
+      return a.trim();
+    }, 
+    ['common']
+  );
+  
+
+  // (re)define const during <$jb.Preprocessor#_pass>
+  // _C_DEF_CONST(A_ + B_ + 1)
+  p._define(
+    '_C_DEF_CONST(WHAT_, TO_, GROUP_)', 
+    function(what, to, group)
+    { 
+      if(group > '')
+      group = (group)
+      this._
+    }, 
+    ['common']
+  );
+  
+  
+})();
+
 });

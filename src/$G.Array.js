@@ -40,20 +40,175 @@ $jb.Loader._scope().
 //_require("$jb/$G.Function.js").
 _require("$jb/$jb.Preprocessor.js").
 _willDeclared("$jb/$G.Array.js").
-_completed(function(){
+_completed(function($G, $jb){
 
-if(!Array.isArray)
+var Array = $G.Array;
+
+Array.U32 = $G.Uint32Array || $G.WebGLUnsignedIntArray || $G.CanvasUnsignedIntArray || Array;
+Array.U16 = $G.Uint16Array || $G.WebGLUnsignedShortArray || $G.CanvasUnsignedShortArray || Array;
+Array.U8 = $G.Uint8Array || $G.WebGLUnsignedByteArray || $G.CanvasUnsignedByteArray || Array;
+
+Array.S32 = $G.Int32Array || $G.WebGLIntArray || $G.CanvasIntArray || Array;
+Array.S16 = $G.Int16Array || $G.WebGLShortArray || $G.CanvasShortArray || Array;
+Array.S8 = $G.Int8Array || $G.WebGLByteArray || $G.CanvasByteArray || Array;
+
+Array.F32 = $G.Float32Array || $G.WebGLFloatArray || $G.CanvasFloatArray || Array;
+Array.F64 = $G.Float64Array || Array;
+
+$jb._defConst('es:support:Array.isArray', typeof(Array.isArray) == 'function');
+
+$jb._defConst('es:support:Array#push', typeof([].push) == 'function');
+$jb._defConst('es:support:Array#pop', typeof([].pop) == 'function');
+
+$jb._defConst('es:support:Array#shift', typeof([].shift) == 'function');
+$jb._defConst('es:support:Array#unshift', typeof([].unshift) == 'function');
+
+$jb._defConst('es:support:Array#indexOf', typeof([].indexOf) == 'function');
+$jb._defConst('es:support:Array#lastIndexOf', typeof([].lastIndexOf) == 'function');
+
+$jb._defConst('es:support:Array#slice', typeof([].slice) == 'function');
+$jb._defConst('es:support:Array#splice', typeof([].splice) == 'function');
+$jb._defConst('es:support:Array#concat', typeof([].concat) == 'function');
+
+$jb._defConst('es:support:Array#join', typeof([].join) == 'function');
+
+$jb._defConst('es:support:Array#filter', typeof([].filter) == 'function');
+$jb._defConst('es:support:Array#map', typeof([].map) == 'function');
+$jb._defConst('es:support:Array#forEach', typeof([].forEach) == 'function');
+$jb._defConst('es:support:Array#every', typeof([].every) == 'function');
+$jb._defConst('es:support:Array#some', typeof([].some) == 'function');
+$jb._defConst('es:support:Array#reduce', typeof([].reduce) == 'function');
+$jb._defConst('es:support:Array#reduceRight', typeof([].reduceRight) == 'function');
+
+Array.isArray = $jb.Optimize._optimize(
 {
-  (function()
+  defaultMethodName: 'custom',
+  methodMap: 
   {
-    var _objToString = Object.prototype.toString;
-    
-    Array.isArray = function(a)
+    'native': $jb._const('es:support:Array.isArray') && Array.isArray,
+    'custom': (function()
     {
-      return (a instanceof Array) || _objToString.call(a) === "[object Array]";
-    };
-  })();
+      var _objToString = Object.prototype.toString;
+      
+      return function(a)
+      {
+        return (a instanceof Array) || _objToString.call(a) === '[object Array]';
+      };
+    })()
+  },
+  _test: function()
+  {
+    this._run(
+      {
+        _run: function(n, _fn, args)
+        {
+          var a = [];
+          
+          var i = n; while(i--)
+            _fn(a);
+
+          var i = n; while(i--)
+            _fn(null);
+        }
+      }
+    )
+  }
 }
+
+if(![].push)
+{
+  
+  Array.prototype.push = function(firstArg)
+  {
+    var argsLen = arguments.length;
+    
+    if(argsLen)
+    {
+      var len = this.length;
+      
+      if(argsLen--)
+        this[len++] = arguments[0];
+      if(argsLen--)
+        this[len++] = arguments[1];
+      
+      arguments[0] = len;
+      arguments[1] = 0;
+      
+      this.splice.call(this, arguments);
+    }
+  };
+};
+
+if(![].pop)
+{
+  Array.prototype.pop = function()
+  {
+    var len = this.length;
+    
+    if(len)
+    {
+      var a = this[len - 1];
+
+      --this.length;
+      
+      return a;
+    }
+  };
+};
+
+if(![].shift)
+{
+  Array.prototype.shift = function()
+  {
+    var len = this.length;
+    
+    if(len)
+    {
+      var a = this[0];
+      var i = 0;
+      
+      len = --this.length;
+      
+      while(i < len)
+        this[i] = this[++i];
+      
+      return a;
+    }
+  };
+};
+
+if(![].unshift)
+{
+  Array.prototype.unshift = function(firstArg)
+  {
+    var argsLen = arguments.length;
+    
+    if(argsLen)
+    {
+      if(argsLen == 1)
+      {
+        var i = this.length; 
+        
+        while(i) this[i] = this[--i];
+      
+        this[0] = firstArg;
+      }
+      else
+      {
+        var i = this.length; 
+        
+        while(i--) this[i + argsLen] = this[i];
+        
+        i = argsLen;
+        
+        while(i--) this[i] = arguments[i];
+      }
+    }
+
+    return this.length;
+  };
+};
+
 
 // https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/Array/indexOf
 if(typeof([].indexOf) !== "function")
@@ -519,7 +674,7 @@ if(!([].splice) || ($w.opera && $w.opera.version() < 11.0))
 
 if(!([].slice) || ($w.opera && $w.opera.version() < 11.0))
 {
-  // opera has 4x slower code .slice realisation that clear js realisation
+  // opera has 4x slower code .slice realization that clear js realization
   Array.prototype.slice = function(begin, end)
   {
     var len = this.length;
@@ -689,7 +844,7 @@ if(typeof([].filter) !== "function")
         throw new TypeError();
       
       var i, len = this.length, j = 0,
-        a = new Array(), v;
+        a = [], v;
       
       if(that == null)
       {

@@ -43,12 +43,12 @@ _completed(function(){
 
 $jb.SpeedTest = function()
 {
-  this.table = $d.createElement('table');
-  this.table.className = 'speedTest';
+  this.divWrapper = $d.createElement('div');
+  this.table;
   
-  this.groupOutEl.appendChild(this.table);
+  this.groupOutEl.appendChild(this.divWrapper);
   
-  this.html_ = '';
+  this.html_ = '<table class="speedTest">';
   
   this.__fnToIdMap = {};
   this.nextFnId_ = 0;
@@ -98,9 +98,10 @@ $jb.SpeedTest.prototype._final = function()
 {
   var v, html = this.html_;
   
-  html += '</tbody><tfoot>' + html.slice(html.indexOf('<thead>') + 7, html.indexOf('</thead>')).replace('-top', '-bottom') + '<tr><th colSpan="' + (2*this.colCount + 1) + '">Show fns<input type="checkbox" id="SpeedTest-toggleShowFns"><button id="SpeedTest-run">Run</button><input id="SpeedTest-mul" value="10" size="4"><button id="SpeedTest-makeDump">Dump</button><input size="4" id="SpeedTest-dump"></th></tr></tfoot>';
+  html += '</tbody><tfoot>' + html.slice(html.indexOf('<thead>') + 7, html.indexOf('</thead>')).replace('-top', '-bottom') + '<tr><th colSpan="' + (2*this.colCount + 1) + '">Show fns<input type="checkbox" id="SpeedTest-toggleShowFns"><button id="SpeedTest-run">Run</button><input id="SpeedTest-mul" value="10" size="4"><button id="SpeedTest-makeDump">Dump</button><input size="4" id="SpeedTest-dump"></th></tr></tfoot></table>';
   
-  this.table.innerHTML = html;
+  this.divWrapper.innerHTML = html;
+  this.table = this.divWrapper.firstChild;
   
   (v = $d.getElementById('SpeedTest-run')).onclick = this._run._fBind(this);
   v.removeAttribute('id');
@@ -157,7 +158,10 @@ $jb.SpeedTest.prototype._onToggleShowFns = function(e)
 
 $jb.SpeedTest.prototype._onToggleAllClick = function(e)
 {
-  this._markAll(e.target.checked);
+  if(e == null)
+    e = event;
+    
+  this._markAll((e.target || e.srcElement).checked);
 };
 $jb.SpeedTest.prototype._markAll = function(mark, except)
 {
