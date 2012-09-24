@@ -119,6 +119,12 @@ if('XDomainRequest' in window)
         this.status = 200;
         this.statusText = 'OK';
         this.responseText = this.xdr_.responseText;
+        if (window.ActiveXObject){
+            var doc = new ActiveXObject('Microsoft.XMLDOM');
+            doc.async='false';
+            doc.loadXML(this.responseText);
+            this.responseXML = doc;
+        }
         
         //setTimeout(this.__finalXDRRequestBind,0);
         
@@ -208,6 +214,7 @@ if('XDomainRequest' in window)
           this.status = xhr.status;
           this.statusText = xhr.statusText;
           this.responseText = xhr.responseText;
+          this.responseXML = xhr.responseXML;
           
           //setTimeout(this.__finalXHRRequestBind,0);
         }
