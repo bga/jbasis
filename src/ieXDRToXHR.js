@@ -35,6 +35,59 @@ if('XDomainRequest' in window)
   {
     var OldXHR = window.XMLHttpRequest;
     
+    var _log = function() {
+      alert([].join.call(arguments, " "))
+    }
+    var assert = function(expr, msg) {
+      if(!expr) {
+        _log("Test failed: " + msg)
+      }
+    }
+    
+    var parseXML = function(s) {
+      var doc = null
+      if(window.DOMParser) {
+        doc = new DOMParser().parseFromString(s, "text/xml")
+        if(doc && doc.getElementsByTagName("parsererror").length > 0) {
+          doc = null
+        } 
+      }
+      else if(window.ActiveXObject) {
+        var createActiveX = function(guids) {
+          var i = guids.length; while(i--) {
+            try {
+              return new ActiveXObject(guids[i])
+            }
+            catch(err) {
+              
+            }
+          }
+        }
+        try {
+          doc = createActiveX(["Microsoft.XMLDOM", "Msxml2.DOMDocument.3.0", "Msxml2.DOMDocument.6.0"])
+          if("async" in doc) {
+            doc.async = false
+          }
+          if("resolveExternals" in doc) {
+            doc.resolveExternals = false
+          }
+          if(!doc.loadXML(s)) {
+            doc = null
+          }
+        }
+        catch(err) {
+          doc = null
+        }
+      }
+      
+      return doc
+    }
+    
+/*     
+    assert(parseXML("<foo />").documentElement.tagName == "foo", "1")
+    assert(parseXML("foo") == null, "2")
+    assert(parseXML("<foo><bar></foo>") == null, "3")
+*/    
     window.XMLHttpRequest = function()
     {
       this.onreadystatechange = null;
@@ -46,6 +99,7 @@ if('XDomainRequest' in window)
       this.status;
       this.statusText;
       this.responseText;
+      this.responseXML;
       
       this.onreadystatechange;
       
@@ -58,6 +112,7 @@ if('XDomainRequest' in window)
       this.send;
       
       this.isXDR_;
+      this.asynch_
 
       // static binding
       var self = this;
@@ -74,8 +129,18 @@ if('XDomainRequest' in window)
     var XHRProto = XMLHttpRequest.prototype;
     var protocolRE = /^([a-z]+):/;
     
+    XHRProto.__loadResponseXML = function() {
+      var doc = null
+      if(200 <= this.status && this.status < 300) {
+        var xhr = ((this.isXDR_) ? this.xdr_ : this.xhr_)
+        doc = parseXML(this.responseText)
+      }
+      this.responseXML = doc
+    }
+    
     XHRProto.open = function(method, url, asynch, user, pwd)
     {
+      this.asynch_ = asynch
       if(protocolRE.test(url) && url.indexOf(document.domain) < 0)
       {
         if(this.xdr_ == null)
@@ -119,12 +184,7 @@ if('XDomainRequest' in window)
         this.status = 200;
         this.statusText = 'OK';
         this.responseText = this.xdr_.responseText;
-        if (window.ActiveXObject){
-            var doc = new ActiveXObject('Microsoft.XMLDOM');
-            doc.async='false';
-            doc.loadXML(this.responseText);
-            this.responseXML = doc;
-        }
+        this.__loadResponseXML()
         
         //setTimeout(this.__finalXDRRequestBind,0);
         
@@ -139,6 +199,7 @@ if('XDomainRequest' in window)
         this.status = 0;
         this.statusText = ''; // ???
         this.responseText = '';
+        this.__loadResponseXML()
 
         //setTimeout(this.__finalXDRRequestBind,0);
         
@@ -152,6 +213,7 @@ if('XDomainRequest' in window)
         this.readyState = 3;
         this.status = 3;
         this.statusText = '';
+        this.__loadResponseXML()
         this.onreadystatechange();
       }  
     };
@@ -173,7 +235,19 @@ if('XDomainRequest' in window)
       xdr.onprogress = this.__xdrProgressBinded;
       this.responseText = null;
       
-      this.xdr_.send(data);
+      _log(typeof(this.xdr_.send(data)));
+      if(!this.asynch_) {
+        if(this.xdr_.contentType == "") { // contentType is empty when load failed
+          this.status = 404
+          this.statusText = "Not Found";
+        }
+        else {
+          this.status = 200;
+          this.statusText = "OK";
+        }
+        this.responseText = this.xdr_.responseText;
+        this.__loadResponseXML()
+      }
     };
     XHRProto.__abortXDR = function()
     {
@@ -214,7 +288,7 @@ if('XDomainRequest' in window)
           this.status = xhr.status;
           this.statusText = xhr.statusText;
           this.responseText = xhr.responseText;
-          this.responseXML = xhr.responseXML;
+          this.__loadResponseXML()
           
           //setTimeout(this.__finalXHRRequestBind,0);
         }
@@ -236,6 +310,12 @@ if('XDomainRequest' in window)
       this.xhr_.onreadystatechange = this.__xhrReadyStateChangedBinded;
       
       this.xhr_.send(data);
+      if(!this.asynch_) {
+        this.status = this.xhr_.status;
+        this.statusText = this.xhr_.statusText;
+        this.responseText = this.xhr_.responseText;
+        this.__loadResponseXML()
+      }
     };
     XHRProto.__setXHRActive = function()
     {
@@ -247,6 +327,35 @@ if('XDomainRequest' in window)
     };
 
     window.__jb_ieXDRToXHR = undefined;
+
+    /*
+    (function() { 
+      var xhr = new XMLHttpRequest()
+      xhr.open("GET", "http://localhost/mirror.app.js?foo/>", true)
+      xhr.onreadystatechange = function() {
+        if(xhr.status == 200) {
+          _log(xhr.responseText)
+          _log(xhr.isXDR_)
+          //assert(xhr.responseXML.documentElement.tagName == "foo", "1")
+          assert(xhr.responseXML == null, "1")
+        }
+      }
+      xhr.send()
+    })()
+    */
+    (function() { 
+      var xhr = new XMLHttpRequest()
+      //xhr.open("GET", "http://127.0.0.1/mirror.app.js?<foo/>", false)
+      //xhr.open("GET", "http://127.0.0.1/_a.js", false)
+      //xhr.open("GET", "http://localhost/_a.js", false)
+      xhr.open("GET", "http://localhost/mirror.app.js?<foo/>", false)
+      xhr.send()
+      _log(xhr.responseText)
+      _log(xhr.isXDR_)
+      _log("contentType", xhr.statusText)
+      assert(xhr.responseXML.documentElement.tagName == "foo", "1")
+      //assert(xhr.responseXML == null, "1")
+    })()
   };
   
   if(window.$jb != null && $jb.Loader != null)
